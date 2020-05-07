@@ -1,5 +1,6 @@
 package com.example.pintest1;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -8,13 +9,17 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.example.pintest1.databinding.ActivityMainBinding;
+import com.example.pintest1.navigation.AddPhotoActivity;
 import com.example.pintest1.navigation.DetailViewFragment;
 import com.example.pintest1.navigation.GridFragment;
 import com.example.pintest1.navigation.AlarmFragment;
@@ -37,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         // Bottom Navigation View
         binding.bottomNavigation.setOnNavigationItemSelectedListener(this);
         binding.bottomNavigation.setSelectedItemId(R.id.action_home);
+
     }
 
     @Override
@@ -75,6 +81,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             case R.id.action_add_photo:
 
+                setToolbarDefault();
+
+                startActivity(new Intent(MainActivity.this, AddPhotoActivity.class));
+
                 return true;
 
             case R.id.action_favorite_alarm:
@@ -112,5 +122,11 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
 
         return false;
+    }
+    public void setToolbarDefault() {
+
+        binding.toolbarTitleImage.setVisibility(View.VISIBLE);
+        binding.toolbarBtnBack.setVisibility(View.GONE);
+        binding.toolbarUsername.setVisibility(View.GONE);
     }
 }
