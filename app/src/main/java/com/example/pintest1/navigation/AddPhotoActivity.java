@@ -17,9 +17,11 @@ import androidx.databinding.DataBindingUtil;
 
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityAddPhotoBinding;
+import com.example.pintest1.model.ContentDTO;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -38,6 +40,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
     // Firebase Storage, Database, Auth
     private FirebaseStorage firebaseStorage;
     //private FirebaseDatabase firebaseDatabase;
+    private FirebaseFirestore db;
     private FirebaseAuth firebaseAuth;
 
     @Override
@@ -63,6 +66,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
         // Firebase Database
         // firebaseDatabase = FirebaseDatabase.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Firebase Auth
         firebaseAuth = FirebaseAuth.getInstance();
@@ -123,11 +127,11 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
                             Toast.makeText(AddPhotoActivity.this, getString(R.string.upload_success),
                                     Toast.LENGTH_SHORT).show();
-                            /*
+
                             @SuppressWarnings("VisibleForTests")
-                            Uri uri = taskSnapshot.getDownloadUrl();
+                            Uri uri = taskSnapshot.getUploadSessionUri();
                             //디비에 바인딩 할 위치 생성 및 컬렉션(테이블)에 데이터 집합 생성
-                            DatabaseReference images = firebaseDatabase.getReference().child("images").push();
+                            //DatabaseReference images = firebaseDatabase.getReference().child("images").push();
 
                             //시간 생성
                             Date date = new Date();
@@ -146,10 +150,10 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
                             contentDTO.timestamp = simpleDateFormat.format(date);
 
                             //게시물을 데이터를 생성 및 엑티비티 종료
-                            images.setValue(contentDTO);
+                            db.collection("images").document().set(contentDTO);
 
                             setResult(RESULT_OK);
-                            finish();*/
+                            finish();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
