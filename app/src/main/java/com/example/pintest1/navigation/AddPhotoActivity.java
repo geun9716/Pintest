@@ -33,6 +33,7 @@ import java.util.Date;
 public class AddPhotoActivity extends AppCompatActivity implements View.OnClickListener {
 
     // Data Binding
+    private Uri contentUri;
     private ActivityAddPhotoBinding binding;
     private String photoUrl;
     int PICK_IMAGE_FROM_ALBUM = 0;
@@ -54,10 +55,10 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
         //권한 요청 하는 부분
         ActivityCompat.requestPermissions
-                (this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                        (this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
 
         //앨범 오픈
-        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, PICK_IMAGE_FROM_ALBUM);
 
@@ -75,7 +76,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
             @Override
             public void onClick(View v) {
-                Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+                Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 photoPickerIntent.setType("image/*");
                 startActivityForResult(photoPickerIntent, PICK_IMAGE_FROM_ALBUM);
             }
@@ -88,7 +89,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
         // 앨범에서 사진 선택시 호출 되는 부분
         if (requestCode == PICK_IMAGE_FROM_ALBUM && resultCode == RESULT_OK) {
 
-            String[] proj = {MediaStore.Images.Media.DATA};
+/*            String[] proj = {MediaStore.Images.Media.DATA};
             CursorLoader cursorLoader = new CursorLoader(this, data.getData(), proj,
                     null, null, null);
             Cursor cursor = cursorLoader.loadInBackground();
@@ -97,7 +98,8 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
             cursor.moveToFirst();
 
             //이미지 경로
-            photoUrl = cursor.getString(column_index);
+            photoUrl = cursor.getString(column_index);*/
+            contentUri = data.getData();
 
             //이미지뷰에 이미지 세팅
             binding.addphotoImage.setImageURI(data.getData());
@@ -109,12 +111,12 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View v) {
 
-        if (v.getId() == R.id.addphoto_btn_upload && photoUrl != null) {
+        if (v.getId() == R.id.addphoto_btn_upload && contentUri != null) {
 
             binding.progressBar.setVisibility(View.VISIBLE);
 
-            File file = new File(photoUrl);
-            Uri contentUri = Uri.fromFile(file);
+/*            File file = new File(photoUrl);
+            Uri contentUri = Uri.fromFile(file);*/
             StorageReference storageRef =
                     firebaseStorage.getReferenceFromUrl("gs://pintest1-589d7.appspot.com").child("images").child(contentUri.getLastPathSegment());
             UploadTask uploadTask = storageRef.putFile(contentUri);
