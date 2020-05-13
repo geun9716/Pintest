@@ -89,16 +89,6 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
         // 앨범에서 사진 선택시 호출 되는 부분
         if (requestCode == PICK_IMAGE_FROM_ALBUM && resultCode == RESULT_OK) {
 
-/*            String[] proj = {MediaStore.Images.Media.DATA};
-            CursorLoader cursorLoader = new CursorLoader(this, data.getData(), proj,
-                    null, null, null);
-            Cursor cursor = cursorLoader.loadInBackground();
-            int column_index =
-                    cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-
-            //이미지 경로
-            photoUrl = cursor.getString(column_index);*/
             contentUri = data.getData();
 
             //이미지뷰에 이미지 세팅
