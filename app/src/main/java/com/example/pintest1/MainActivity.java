@@ -19,6 +19,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.pintest1.databinding.ActivityMainBinding;
@@ -39,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         super.onCreate(savedInstanceState);
 
         checkSelfPermission();
-
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         binding.progressBar.setVisibility(View.VISIBLE);
@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         switch (item.getItemId()) {
 
             case R.id.action_home:
-
+                setToolbarDefault();
                 Fragment detailViewFragment = new DetailViewFragment();
                 Bundle bundle_0 = new Bundle();
                 bundle_0.putInt("ARG_NO", 0);
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 return true;
 
             case R.id.action_search:
-
+                setToolbarDefault();
                 Fragment gridFragment = new GridFragment();
 
                 Bundle bundle_1 = new Bundle();
@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             case R.id.action_favorite_alarm:
 
-
+                setToolbarDefault();
                 Fragment alarmFragment = new AlarmFragment();
 
                 Bundle bundle_3 = new Bundle();
@@ -138,6 +138,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 return true;
 
             case R.id.action_account:
+
+                binding.ivMenu.setVisibility(View.VISIBLE);
+                binding.toolbarBtnBack.setVisibility(View.VISIBLE);
+
                 Fragment userFragment = new UserFragment();
 
                 String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -159,7 +163,12 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     public void setToolbarDefault() {
 
         binding.toolbarTitleImage.setVisibility(View.VISIBLE);
+        binding.ivMenu.setVisibility(View.GONE);
         binding.toolbarBtnBack.setVisibility(View.GONE);
         binding.toolbarUsername.setVisibility(View.GONE);
+
+    }
+    public ActivityMainBinding getBinding(){
+        return binding;
     }
 }
