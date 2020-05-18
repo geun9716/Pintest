@@ -1,9 +1,6 @@
 package com.example.pintest1;
 
 import android.Manifest;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 
 
 import android.content.Intent;
@@ -12,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -90,9 +88,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
                 detailViewFragment.setArguments(bundle_0);
 
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.main_content, detailViewFragment)
-                        .commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, detailViewFragment).commit();
 
                 return true;
 
@@ -105,10 +101,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
                 gridFragment.setArguments(bundle_1);
 
-                getFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.main_content, gridFragment)
-                        .commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, gridFragment).commit();
 
                 return true;
 
@@ -130,10 +123,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
                 alarmFragment.setArguments(bundle_3);
 
-                getFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.main_content, alarmFragment)
-                        .commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, alarmFragment).commit();
 
                 return true;
 
@@ -151,9 +141,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 bundle.putInt("ARG_NO", 4);
 
                 userFragment.setArguments(bundle);
-                getFragmentManager().beginTransaction()
-                        .replace(R.id.main_content, userFragment)
-                        .commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, userFragment).commit();
 
                 return true;
         }
