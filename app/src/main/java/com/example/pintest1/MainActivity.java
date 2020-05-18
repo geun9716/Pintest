@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             case R.id.action_home:
                 setToolbarDefault();
+
                 Fragment detailViewFragment = new DetailViewFragment();
                 Bundle bundle_0 = new Bundle();
                 bundle_0.putInt("ARG_NO", 0);

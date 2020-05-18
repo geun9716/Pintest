@@ -1,5 +1,7 @@
 package com.example.pintest1.model;
 
+import android.net.Uri;
+
 import java.util.HashMap;
 import java.util.Map;
 

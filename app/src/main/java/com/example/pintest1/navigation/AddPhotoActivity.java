@@ -87,6 +87,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         // 앨범에서 사진 선택시 호출 되는 부분
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_FROM_ALBUM && resultCode == RESULT_OK) {
 
             contentUri = data.getData();
