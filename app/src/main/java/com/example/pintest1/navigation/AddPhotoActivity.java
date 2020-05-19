@@ -20,6 +20,7 @@ import com.example.pintest1.databinding.ActivityAddPhotoBinding;
 import com.example.pintest1.model.ContentDTO;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
@@ -106,13 +107,18 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
             binding.progressBar.setVisibility(View.VISIBLE);
 
-/*            File file = new File(photoUrl);
+
+            /*File file = new File(photoUrl);
             Uri contentUri = Uri.fromFile(file);*/
+
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String imageFileName = "JPEG__"+timeStamp + "__.jpg";
+
+
             StorageReference storageRef =
-                    firebaseStorage.getReferenceFromUrl("gs://pintest1-589d7.appspot.com").child("images").child(contentUri.getLastPathSegment());
+                    firebaseStorage.getReferenceFromUrl("gs://pintest1-589d7.appspot.com").child("images").child(imageFileName);
             UploadTask uploadTask = storageRef.putFile(contentUri);
-            uploadTask
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
@@ -121,31 +127,35 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
                             Toast.makeText(AddPhotoActivity.this, getString(R.string.upload_success),
                                     Toast.LENGTH_SHORT).show();
 
-                            @SuppressWarnings("VisibleForTests")
-                            Uri uri = taskSnapshot.getUploadSessionUri();
+                            //시간 생성
+                            final Date date = new Date();
+                            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            final ContentDTO contentDTO = new ContentDTO();
+
+                            Task<Uri> task = taskSnapshot.getMetadata().getReference().getDownloadUrl();
+                            task.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    //이미지 주소
+                                    contentDTO.imageUrl = uri.toString();
+                                    //유저의 UID
+                                    contentDTO.uid = firebaseAuth.getCurrentUser().getUid();
+                                    //게시물의 설명
+                                    contentDTO.explain = binding.addphotoEditExplain.getText().toString();
+                                    //유저의 아이디
+                                    contentDTO.userId = firebaseAuth.getCurrentUser().getEmail();
+                                    //게시물 업로드 시간
+                                    contentDTO.timestamp = simpleDateFormat.format(date);
+
+                                    //게시물을 데이터를 생성 및 엑티비티 종료
+                                    db.collection("images").document().set(contentDTO);
+
+                                    setResult(RESULT_OK);
+                                }
+                            });
                             //디비에 바인딩 할 위치 생성 및 컬렉션(테이블)에 데이터 집합 생성
                             //DatabaseReference images = firebaseDatabase.getReference().child("images").push();
 
-                            //시간 생성
-                            Date date = new Date();
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                            ContentDTO contentDTO = new ContentDTO();
-
-                            //이미지 주소
-                            contentDTO.imageUrl = uri.toString();
-                            //유저의 UID
-                            contentDTO.uid = firebaseAuth.getCurrentUser().getUid();
-                            //게시물의 설명
-                            contentDTO.explain = binding.addphotoEditExplain.getText().toString();
-                            //유저의 아이디
-                            contentDTO.userId = firebaseAuth.getCurrentUser().getEmail();
-                            //게시물 업로드 시간
-                            contentDTO.timestamp = simpleDateFormat.format(date);
-
-                            //게시물을 데이터를 생성 및 엑티비티 종료
-                            db.collection("images").document().set(contentDTO);
-
-                            setResult(RESULT_OK);
                             finish();
                         }
                     })

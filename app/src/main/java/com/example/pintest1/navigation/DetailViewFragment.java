@@ -104,7 +104,7 @@ public class DetailViewFragment extends Fragment {
             binding.detailviewitemProfileTextview.setText(contentDTOs.get(position).userId);
 
             // 가운데 이미지
-            Glide.with(holder.itemView.getContext()).load("https://firebasestorage.googleapis.com/v0/b/pintest1-589d7.appspot.com/o?name=images%2Fimage%3A46&uploadType=resumable&upload_id=AAANsUkQ1PC0xz6vvvro0uN_7tXtGuwNPw_dTf1HDtXpTqM_F1iGomwfKVVb7yFz3GWMBR_rPc3BFCu0ozXz11V9nTI&upload_protocol=resumable").into(binding.detailviewitemImageviewContent);
+            Glide.with(holder.itemView).load(contentDTOs.get(position).imageUrl).into(binding.detailviewitemImageviewContent);
 
             // 설명 텍스트
             binding.detailviewitemExplainTextview.setText(contentDTOs.get(position).explain);
