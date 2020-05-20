@@ -132,6 +132,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
                             final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                             final ContentDTO contentDTO = new ContentDTO();
 
+
                             Task<Uri> task = taskSnapshot.getMetadata().getReference().getDownloadUrl();
                             task.addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override

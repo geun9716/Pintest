@@ -1,12 +1,12 @@
 package com.example.pintest1.navigation;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
@@ -19,11 +19,14 @@ import com.example.pintest1.databinding.ItemDetailviewBinding;
 import com.example.pintest1.model.ContentDTO;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Transaction;
 
 import java.util.ArrayList;
 
@@ -68,7 +71,7 @@ public class DetailViewFragment extends Fragment {
             contentDTOs = new ArrayList<>();
             contentUidList = new ArrayList<>();
 
-            firestore.collection("images").orderBy("timestamp").addSnapshotListener(
+            firestore.collection("images").orderBy("timestamp", Query.Direction.DESCENDING).addSnapshotListener(
                     new EventListener<QuerySnapshot>() {
                         @Override
                         public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
@@ -81,8 +84,6 @@ public class DetailViewFragment extends Fragment {
                             notifyDataSetChanged();
                         }
                     });
-
-
         }
 
         @Override
@@ -112,6 +113,25 @@ public class DetailViewFragment extends Fragment {
             //좋아요
             binding.detailviewitemFavoritecounterTextview.setText("Likes " + contentDTOs.get(position).favoriteCount);
 
+            //This code is when the button is clicked
+            binding.detailviewitemFavoriteImageview.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View v) {
+                    favoriteEvent(finalPosition);
+                }
+            });
+
+            if(contentDTOs.get(position).favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
+                //This is like status
+                binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite_border);
+            }
+            else
+            {
+                //This is unlike status
+                binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite);
+            }
+
 
         }
 
@@ -137,6 +157,36 @@ public class DetailViewFragment extends Fragment {
 
                 return binding;
             }
+        }
+
+        private void favoriteEvent(int position){
+            final int finalPosition = position;
+            final DocumentReference tsDoc = firestore.collection("images").document(contentUidList.get(position));
+            firestore.runTransaction(new Transaction.Function<Handler>() {
+
+                @Nullable
+                @Override
+                public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
+                    String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    ContentDTO contentDTO = transaction.get(tsDoc).toObject(ContentDTO.class);
+
+                    if(contentDTO.favorites.containsKey(uid)){
+                        //When the button is clicked
+                        contentDTO.favoriteCount = contentDTO.favoriteCount-1;
+                        contentDTO.favorites.remove(uid);
+                    }
+                    else{
+                        //When the button is not clicked
+                        contentDTO.favoriteCount = contentDTO.favoriteCount+1;
+                        contentDTO.favorites.put(uid,true);
+                    }
+                    transaction.set(tsDoc,contentDTO);
+
+                    return null;
+                }
+            });
+
+
         }
     }
 }

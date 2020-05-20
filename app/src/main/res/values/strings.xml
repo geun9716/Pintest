@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Howlstagram</string>
+    <string name="app_name">Pinsert</string>
     <string name="facebook_app_id">2648878998765971</string>
     <string name="fb_login_protocol_scheme">fb2648878998765971</string>
 
@@ -20,7 +20,7 @@
     <!-- Bottom Navigation View -->
     <string name="home">home</string>
     <string name="search">Search</string>
-    <string name="gallery">Gallery</string>
+    <string name="Pinsert">Pinsert</string>
     <string name="favorite">Favorite</string>
     <string name="account">Account</string>
 

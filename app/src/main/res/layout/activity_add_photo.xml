@@ -6,7 +6,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".tabbar.AddPhotoActivity">
+        tools:context=".navigation.AddPhotoActivity">
 
         <ProgressBar
             android:id="@+id/progress_bar"
@@ -30,7 +30,7 @@
                 android:layout_height="match_parent"
                 android:layout_margin="3dp"
                 android:contentDescription="@string/app_name"
-                android:src="@drawable/logo_title" />
+                android:src="@drawable/pinsert_logo" />
 
         </android.widget.Toolbar>
 
