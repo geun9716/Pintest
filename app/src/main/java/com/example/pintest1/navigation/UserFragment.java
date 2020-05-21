@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,19 +14,75 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
+import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.LoginActivity;
 import com.example.pintest1.MainActivity;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityMainBinding;
+import com.example.pintest1.databinding.FragmentUserBinding;
+import com.example.pintest1.model.ContentDTO;
+import com.example.pintest1.model.FollowDTO;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Transaction;
+
+import java.util.ArrayList;
+
+import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
 public class UserFragment extends Fragment {
+
     private ActivityMainBinding binding;
     Context context;
-    FirebaseAuth firebaseAuth;
+
+    // Data Binding
+    private FragmentUserBinding userbinding;
+
+    // Firebase
+    private FirebaseAuth firebaseAuth;
+    private FirebaseFirestore firestore;
+    FirebaseAuth.AuthStateListener authListener;
+
+    //private String destinationUid;
+    private String uid;
+    private String currentUserUid;
+
+    // Activity
+    private MainActivity activity;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (context instanceof Activity) {
+
+            activity = (MainActivity) context;
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -33,6 +90,25 @@ public class UserFragment extends Fragment {
         context = container.getContext();
 
         firebaseAuth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
+        uid = getArguments().getString("destinationUid");
+        currentUserUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        authListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                // User is signed out
+                if (user == null) {
+
+                    Toast.makeText(activity, getString(R.string.signout_success), Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(activity, LoginActivity.class);
+                    activity.startActivity(intent);
+                    activity.finish();
+                }
+            }
+        };
 
         TabHost tabHost = (TabHost) view.findViewById(R.id.th_PinOrRoad);
         tabHost.setup();
@@ -60,16 +136,233 @@ public class UserFragment extends Fragment {
                 }
             }
         });
-
-
         return view;
     }
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        userbinding = FragmentUserBinding.bind(getView());
+        binding.ivMenu.setVisibility(View.VISIBLE);
 
-/*    public void onClick(View v) {
-        if(v.getId() == R.id.iv_menu){
+        if(getArguments() != null){
+            uid = getArguments().getString("destinationUid");
 
-            Toast.makeText(context , "menu Selected", Toast.LENGTH_SHORT).show();
+            //MyPage
+            if(uid == currentUserUid){
+                userbinding.accountBtnFollowSignout.setText(R.string.signout);
+                userbinding.accountBtnFollowSignout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        SignOut();
+                    }
+                });
+                activity.setToolbarDefault();
+            }
+            else    //Other User Page
+            {
+                userbinding.accountBtnFollowSignout.setText(R.string.follow);
+                binding.toolbarTitleImage.setVisibility(View.GONE);
+                binding.toolbarBtnBack.setVisibility(View.VISIBLE);
+                binding.toolbarUsername.setVisibility(View.VISIBLE);
 
+                binding.toolbarUsername.setText(getArguments().getString("userID"));
+                binding.toolbarBtnBack.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v) {
+                        binding.bottomNavigation.setSelectedItemId(R.id.action_home);
+                    }
+                });
+            }
         }
-    }*/
+        //Profile Image Click Listener
+        userbinding.accountIvProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                photoPickerIntent.setType("image/*");
+                activity.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM);
+            }
+        });
+
+        getProfileImage();
+
+        userbinding.accountRecyclerviewPin.setLayoutManager(new GridLayoutManager(getActivity(),3));
+        userbinding.accountRecyclerviewPin.setAdapter(new UserFragmentRecyclerViewAdapter());
+    }
+
+    private class UserFragmentRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+
+        private ArrayList<ContentDTO> contentDTOs;
+
+        UserFragmentRecyclerViewAdapter(){
+            contentDTOs = new ArrayList<ContentDTO>();
+            firestore.collection("images").whereEqualTo("uid",uid).addSnapshotListener(
+                            new EventListener<QuerySnapshot>() {
+                @Override
+                public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                    contentDTOs.clear();
+                    if (queryDocumentSnapshots == null) return ;
+
+                    for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
+                        contentDTOs.add(document.toObject(ContentDTO.class));
+                    }
+                    userbinding.accountTvPostCount.setText(String.valueOf(contentDTOs.size()));
+                    notifyDataSetChanged();
+                }
+            });
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+            int width = getResources().getDisplayMetrics().widthPixels / 3;
+
+            ImageView imageView = new ImageView(parent.getContext());
+            imageView.setLayoutParams(new LinearLayoutCompat.LayoutParams(width,width));
+            
+            return new CustomViewHolder(imageView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            Glide.with(holder.itemView.getContext()).load(contentDTOs.get(position).imageUrl)
+                    .apply(new RequestOptions().centerCrop()).into(((CustomViewHolder) holder).imageView);
+        }
+
+        @Override
+        public int getItemCount() {
+            return contentDTOs.size();
+        }
+
+        private class CustomViewHolder extends RecyclerView.ViewHolder {
+            private ImageView imageView;
+            CustomViewHolder(ImageView imageView) {
+                super(imageView);
+                this.imageView = imageView;
+            }
+        }
+    }
+
+    /*
+    * Get - Profile Image, Follower Count, Following Count
+    */
+    void getProfileImage(){
+        firestore.collection("profileImages").document(uid).addSnapshotListener(
+                new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                        if(documentSnapshot == null) return;
+                        if(documentSnapshot != null)
+                        {
+                            String url = documentSnapshot.getData().get(uid).toString();
+                            Glide.with(activity).load(url).apply(new RequestOptions().circleCrop()).into(userbinding.accountIvProfile);
+                        }
+                    }
+                }
+        );
+    }
+
+    /*
+     * Request Follower, Follow Alarm
+     */
+
+    public void requestFollow(){
+       final DocumentReference tsDocFollowing  = firestore.collection("users").document(currentUserUid);
+       firestore.runTransaction(
+               new Transaction.Function<Handler>() {
+                   @Nullable
+                   @Override
+                   public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
+                       FollowDTO followDTO = transaction.get(tsDocFollowing).toObject(FollowDTO.class);
+                       if(followDTO == null)
+                       {
+                           followDTO = new FollowDTO();
+                           followDTO.followingCount = 1;
+                           followDTO.followers.put(uid,true);
+
+                           transaction.set(tsDocFollowing,followDTO);
+                       }
+                       return null;
+                   }
+               });
+    }
+
+
+    private void SignOut() {
+        if(firebaseAuth.getCurrentUser().getProviders() != null && firebaseAuth.getCurrentUser().equals("google.com")){
+            googleSignOut();
+        }
+        else {
+            firebaseAuth.signOut();
+        }
+    }
+
+    private void googleSignOut() {
+        // GoogleSignInOptions 개체 구성
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        // Build a GoogleApiClient with access to the Google Sign-In API and the options specified by gso.
+        final GoogleApiClient googleApiClient = new GoogleApiClient.Builder(activity)
+                .enableAutoManage((FragmentActivity) activity, new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+                        // hideProgressDialog();
+                        Toast.makeText(activity, getString(R.string.signout_fail), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+
+        googleApiClient.connect();
+        googleApiClient.registerConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+
+            @Override
+            public void onConnected(@Nullable Bundle bundle) {
+
+                firebaseAuth.signOut();
+                if (googleApiClient.isConnected()) {
+
+                    Auth.GoogleSignInApi.signOut(googleApiClient).setResultCallback(new ResultCallback<Status>() {
+
+                        @Override
+                        public void onResult(@NonNull Status status) {
+
+                            if (!status.isSuccess()) {
+
+                                // hideProgressDialog();
+                                Toast.makeText(activity, getString(R.string.signout_fail), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onConnectionSuspended(int i) {
+
+                // hideProgressDialog();
+                Toast.makeText(activity, getString(R.string.signout_fail), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        firebaseAuth.addAuthStateListener(authListener);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        firebaseAuth.removeAuthStateListener(authListener);
+    }
+
 }

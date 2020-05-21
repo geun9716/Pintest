@@ -1,8 +1,10 @@
 package com.example.pintest1.navigation;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.*;
 import com.example.pintest1.databinding.ItemDetailviewBinding;
 import com.example.pintest1.model.ContentDTO;
@@ -77,6 +80,7 @@ public class DetailViewFragment extends Fragment {
                         public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
                             contentDTOs.clear();
                             contentUidList.clear();
+                            if (queryDocumentSnapshots == null) return ;
                             for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
                                 contentDTOs.add(document.toObject(ContentDTO.class));
                                 contentUidList.add(document.getId());
@@ -94,12 +98,29 @@ public class DetailViewFragment extends Fragment {
             return new CustomViewHolder(view);
         }
 
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
 
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((CustomViewHolder) holder).getBinding();
 
+            //Profile Image
+            binding.detailviewitemProfileImage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Fragment fragment = new UserFragment();
+
+                    Bundle bundle = new Bundle();
+                    bundle.putString("destinationUid", contentDTOs.get(finalPosition).uid);
+                    bundle.putString("userId",contentDTOs.get(finalPosition).userId);
+                    bundle.putInt("ARG_NO",5);
+
+                    fragment.setArguments(bundle);
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.main_content, fragment).commit();
+                }
+            });
 
             // 유저 아이디
             binding.detailviewitemProfileTextview.setText(contentDTOs.get(position).userId);
@@ -114,13 +135,14 @@ public class DetailViewFragment extends Fragment {
             binding.detailviewitemFavoritecounterTextview.setText("Likes " + contentDTOs.get(position).favoriteCount);
 
             //This code is when the button is clicked
-            binding.detailviewitemFavoriteImageview.setOnClickListener(new View.OnClickListener(){
-
+            binding.detailviewitemFavoriteImageview.setOnTouchListener(new View.OnTouchListener() {
                 @Override
-                public void onClick(View v) {
+                public boolean onTouch(View v, MotionEvent event) {
                     favoriteEvent(finalPosition);
+                    return false;
                 }
             });
+
 
             if(contentDTOs.get(position).favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
                 //This is like status

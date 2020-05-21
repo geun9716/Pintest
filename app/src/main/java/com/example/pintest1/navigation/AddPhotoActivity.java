@@ -31,13 +31,14 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.example.pintest1.util.StatusCode.PICK_IMAGE_FROM_ALBUM;
+
 public class AddPhotoActivity extends AppCompatActivity implements View.OnClickListener {
 
     // Data Binding
     private Uri contentUri;
     private ActivityAddPhotoBinding binding;
     private String photoUrl;
-    int PICK_IMAGE_FROM_ALBUM = 0;
 
     // Firebase Storage, Database, Auth
     private FirebaseStorage firebaseStorage;

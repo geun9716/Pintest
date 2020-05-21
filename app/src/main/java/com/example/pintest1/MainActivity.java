@@ -12,6 +12,7 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -26,18 +27,31 @@ import com.example.pintest1.navigation.DetailViewFragment;
 import com.example.pintest1.navigation.GridFragment;
 import com.example.pintest1.navigation.AlarmFragment;
 import com.example.pintest1.navigation.UserFragment;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.example.pintest1.util.StatusCode.PICK_IMAGE_FROM_ALBUM;
+import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
 
     private ActivityMainBinding binding;
 
+    private Uri photoPath;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        checkSelfPermission();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         binding.progressBar.setVisibility(View.VISIBLE);
@@ -47,34 +61,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         binding.bottomNavigation.setSelectedItemId(R.id.action_home);
 
     }
-
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        //권한을 허용 했을 경우
-        if(requestCode == 1){
-            int length = permissions.length;
-            for (int i = 0; i < length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) { // 동의
-                    Log.d("MainActivity","권한 허용 : " + permissions[i]);
-                }
-            }
-        }
-    }
-    public void checkSelfPermission() {
-        String temp = "";
-        //파일 읽기 권한 확인
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            temp += Manifest.permission.READ_EXTERNAL_STORAGE + " ";
-        }
-
-        if (TextUtils.isEmpty(temp) == false) {
-            // 권한 요청
-            ActivityCompat.requestPermissions(this, temp.trim().split(" "), 1);
-        } else {
-            // 모두 허용 상태
-            Toast.makeText(this, "권한을 모두 허용", Toast.LENGTH_SHORT).show();
-        }
-    }
-
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -130,9 +116,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             case R.id.action_account:
 
-                binding.ivMenu.setVisibility(View.VISIBLE);
-                binding.toolbarBtnBack.setVisibility(View.VISIBLE);
-
                 Fragment userFragment = new UserFragment();
 
                 String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -149,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
         return false;
     }
+
     public void setToolbarDefault() {
 
         binding.toolbarTitleImage.setVisibility(View.VISIBLE);
@@ -157,7 +141,42 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         binding.toolbarUsername.setVisibility(View.GONE);
 
     }
-    public ActivityMainBinding getBinding(){
+
+    public ActivityMainBinding getBinding() {
         return binding;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_PROFILE_FROM_ALBUM && resultCode == RESULT_OK) {
+            photoPath = data.getData();
+            final String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            StorageReference storageRef =
+                    FirebaseStorage.getInstance().getReferenceFromUrl("gs://pintest1-589d7.appspot.com").child("userProfileimages").child(uid);
+            UploadTask uploadTask = storageRef.putFile(photoPath);
+            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    binding.progressBar.setVisibility(View.GONE);
+
+                    final Map<String, Object> map = new HashMap<String, Object>();
+
+                    Task<Uri> task = taskSnapshot.getMetadata().getReference().getDownloadUrl();
+                    task.addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            map.put(uid, uri.toString());
+                            FirebaseFirestore.getInstance().collection("profileImages").document(uid).set(map);
+                        }
+                    });
+                }
+            });
+        }
+        else if(requestCode ==PICK_IMAGE_FROM_ALBUM &&resultCode ==RESULT_OK)
+        {
+            binding.bottomNavigation.setSelectedItemId(R.id.action_account);
+        }
     }
 }
