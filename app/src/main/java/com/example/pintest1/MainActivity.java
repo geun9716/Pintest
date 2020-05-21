@@ -39,6 +39,7 @@ import com.google.firebase.storage.UploadTask;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.pintest1.util.StatusCode.FRAGMENT_ARG;
 import static com.example.pintest1.util.StatusCode.PICK_IMAGE_FROM_ALBUM;
 import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
@@ -71,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
                 Fragment detailViewFragment = new DetailViewFragment();
                 Bundle bundle_0 = new Bundle();
-                bundle_0.putInt("ARG_NO", 0);
+                bundle_0.putInt(FRAGMENT_ARG, 0);
 
                 detailViewFragment.setArguments(bundle_0);
 
@@ -84,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 Fragment gridFragment = new GridFragment();
 
                 Bundle bundle_1 = new Bundle();
-                bundle_1.putInt("ARG_NO", 1);
+                bundle_1.putInt(FRAGMENT_ARG, 1);
 
                 gridFragment.setArguments(bundle_1);
 
@@ -106,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 Fragment alarmFragment = new AlarmFragment();
 
                 Bundle bundle_3 = new Bundle();
-                bundle_3.putInt("ARG_NO", 3);
+                bundle_3.putInt(FRAGMENT_ARG, 3);
 
                 alarmFragment.setArguments(bundle_3);
 
@@ -120,11 +121,11 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
                 String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                Bundle bundle = new Bundle();
-                bundle.putString("destinationUid", uid);
-                bundle.putInt("ARG_NO", 4);
+                Bundle bundle_4 = new Bundle();
+                bundle_4.putString("destinationUid", uid);
+                bundle_4.putInt(FRAGMENT_ARG, 4);
 
-                userFragment.setArguments(bundle);
+                userFragment.setArguments(bundle_4);
                 getSupportFragmentManager().beginTransaction().replace(R.id.main_content, userFragment).commit();
 
                 return true;

@@ -3,9 +3,11 @@ package com.example.pintest1.navigation;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -16,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -46,8 +49,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
+
+import org.w3c.dom.Document;
 
 import java.util.ArrayList;
 
@@ -160,16 +166,23 @@ public class UserFragment extends Fragment {
             }
             else    //Other User Page
             {
-                userbinding.accountBtnFollowSignout.setText(R.string.follow);
                 binding.toolbarTitleImage.setVisibility(View.GONE);
                 binding.toolbarBtnBack.setVisibility(View.VISIBLE);
                 binding.toolbarUsername.setVisibility(View.VISIBLE);
 
-                binding.toolbarUsername.setText(getArguments().getString("userID"));
+                binding.toolbarUsername.setText(getArguments().getString("userId"));
                 binding.toolbarBtnBack.setOnClickListener(new View.OnClickListener(){
                     @Override
                     public void onClick(View v) {
                         binding.bottomNavigation.setSelectedItemId(R.id.action_home);
+                    }
+                });
+
+                userbinding.accountBtnFollowSignout.setText(R.string.follow);
+                userbinding.accountBtnFollowSignout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        requestFollow();
                     }
                 });
             }
@@ -186,10 +199,13 @@ public class UserFragment extends Fragment {
         });
 
         getProfileImage();
+        getFollower();
+        getFollowing();
 
         userbinding.accountRecyclerviewPin.setLayoutManager(new GridLayoutManager(getActivity(),3));
         userbinding.accountRecyclerviewPin.setAdapter(new UserFragmentRecyclerViewAdapter());
     }
+
 
     private class UserFragmentRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
@@ -203,7 +219,6 @@ public class UserFragment extends Fragment {
                 public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
                     contentDTOs.clear();
                     if (queryDocumentSnapshots == null) return ;
-
                     for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
                         contentDTOs.add(document.toObject(ContentDTO.class));
                     }
@@ -254,10 +269,57 @@ public class UserFragment extends Fragment {
                     @Override
                     public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
                         if(documentSnapshot == null) return;
-                        if(documentSnapshot != null)
+                        if(documentSnapshot.getData() != null)
                         {
                             String url = documentSnapshot.getData().get(uid).toString();
                             Glide.with(activity).load(url).apply(new RequestOptions().circleCrop()).into(userbinding.accountIvProfile);
+                        }
+                    }
+                }
+        );
+    }
+    void getFollower() {
+        firestore.collection("users").document(uid).addSnapshotListener(
+                new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                        if(documentSnapshot == null) return;
+
+                        FollowDTO followDTO = documentSnapshot.toObject(FollowDTO.class);
+                        try{
+                            userbinding.accountTvFollowerCount.setText(Integer.toString(followDTO.followerCount));
+                            if(followDTO.followers.containsKey(currentUserUid)){
+                                userbinding.accountBtnFollowSignout.setText(R.string.follow_cancel);
+                                userbinding.accountBtnFollowSignout.getBackground()
+                                        .setColorFilter(ContextCompat.getColor(activity, R.color.colorLightGray), PorterDuff.Mode.MULTIPLY);
+                            } else{
+                                if(!uid.equals(currentUserUid)){
+                                    userbinding.accountBtnFollowSignout.setText(getString(R.string.follow));
+                                    userbinding.accountBtnFollowSignout
+                                            .getBackground().setColorFilter(null);
+                                }
+                            }
+
+                        } catch (Exception ex){
+                            ex.printStackTrace();
+                        }
+
+                    }
+                }
+        );
+    }
+    void getFollowing() {
+        firestore.collection("users").document(uid).addSnapshotListener(
+                new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                        if(documentSnapshot == null) return;
+
+                        FollowDTO followDTO = documentSnapshot.toObject(FollowDTO.class);
+                        try{
+                            userbinding.accountTvFollowingCount.setText(Integer.toString(followDTO.followingCount));
+                        } catch (Exception ex){
+                            ex.printStackTrace();
                         }
                     }
                 }
@@ -268,25 +330,66 @@ public class UserFragment extends Fragment {
      * Request Follower, Follow Alarm
      */
 
-    public void requestFollow(){
-       final DocumentReference tsDocFollowing  = firestore.collection("users").document(currentUserUid);
-       firestore.runTransaction(
-               new Transaction.Function<Handler>() {
-                   @Nullable
-                   @Override
-                   public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
-                       FollowDTO followDTO = transaction.get(tsDocFollowing).toObject(FollowDTO.class);
-                       if(followDTO == null)
-                       {
-                           followDTO = new FollowDTO();
-                           followDTO.followingCount = 1;
-                           followDTO.followers.put(uid,true);
+    public void requestFollow() {
+        final DocumentReference tsDocFollowing = firestore.collection("users").document(currentUserUid);
+        firestore.runTransaction(
+                new Transaction.Function<Handler>() {
+                    @Nullable
+                    @Override
+                    public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
+                        FollowDTO followDTO = transaction.get(tsDocFollowing).toObject(FollowDTO.class);
+                        if (followDTO == null) {
+                            followDTO = new FollowDTO();
+                            followDTO.followingCount = 1;
+                            followDTO.followings.put(uid, true);
 
-                           transaction.set(tsDocFollowing,followDTO);
-                       }
-                       return null;
-                   }
-               });
+                            transaction.set(tsDocFollowing, followDTO);
+                            return null;
+                        }
+
+                        if (followDTO.followings.containsKey(uid)) {
+                            //It remove following third person when a third person
+                            followDTO.followingCount = followDTO.followingCount - 1;
+                            followDTO.followings.remove(uid);
+                        } else {
+                            //It add following third person when a third person do not follow me
+                            followDTO.followingCount = followDTO.followingCount + 1;
+                            followDTO.followings.put(uid, true);
+                        }
+                        transaction.set(tsDocFollowing, followDTO);
+                        return null;
+                    }
+                });
+        //Save data to Third person
+        final DocumentReference tsDocFollower = firestore.collection("users").document(uid);
+        firestore.runTransaction(
+                new Transaction.Function<Handler>() {
+                    @Nullable
+                    @Override
+                    public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
+                        FollowDTO followDTO = transaction.get(tsDocFollower).toObject(FollowDTO.class);
+                        if (followDTO == null) {
+                            followDTO = new FollowDTO();
+                            followDTO.followerCount = 1;
+                            followDTO.followers.put(currentUserUid, true);
+
+                            transaction.set(tsDocFollower, followDTO);
+                            return null;
+                        }
+
+                        if (followDTO.followers.containsKey(currentUserUid)) {
+                            //It remove follower third person when a third person follow me
+                            followDTO.followerCount = followDTO.followerCount - 1;
+                            followDTO.followers.remove(currentUserUid);
+                        } else {
+                            //It add follower third person when a third person do not follow me
+                            followDTO.followerCount = followDTO.followerCount + 1;
+                            followDTO.followers.put(currentUserUid, true);
+                        }
+                        transaction.set(tsDocFollower, followDTO);
+                        return null;
+                    }
+                });
     }
 
 

@@ -33,6 +33,8 @@ import com.google.firebase.firestore.Transaction;
 
 import java.util.ArrayList;
 
+import static com.example.pintest1.util.StatusCode.FRAGMENT_ARG;
+
 public class DetailViewFragment extends Fragment {
 
     private FirebaseUser user;
@@ -106,6 +108,19 @@ public class DetailViewFragment extends Fragment {
             final ItemDetailviewBinding binding = ((CustomViewHolder) holder).getBinding();
 
             //Profile Image
+            firestore.collection("profileImages").document(contentDTOs.get(finalPosition).uid).addSnapshotListener(
+                    new EventListener<DocumentSnapshot>() {
+                        @Override
+                        public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                            if(documentSnapshot == null) return;
+                            if(documentSnapshot.getData() != null)
+                            {
+                                String url = documentSnapshot.getData().get(contentDTOs.get(finalPosition).uid).toString();
+                                Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.detailviewitemProfileImage);
+                            }
+                        }
+                    }
+            );
             binding.detailviewitemProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -114,7 +129,7 @@ public class DetailViewFragment extends Fragment {
                     Bundle bundle = new Bundle();
                     bundle.putString("destinationUid", contentDTOs.get(finalPosition).uid);
                     bundle.putString("userId",contentDTOs.get(finalPosition).userId);
-                    bundle.putInt("ARG_NO",5);
+                    bundle.putInt(FRAGMENT_ARG,5);
 
                     fragment.setArguments(bundle);
                     getActivity().getSupportFragmentManager().beginTransaction()
