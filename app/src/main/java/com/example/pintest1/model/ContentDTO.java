@@ -2,10 +2,11 @@ package com.example.pintest1.model;
 
 import android.net.Uri;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ContentDTO {
+public class ContentDTO implements Serializable {
 
     public String explain;
     public String imageUrl;
@@ -29,4 +30,9 @@ public class ContentDTO {
     public String toString() {
         return "uid = " + uid + " , userid = " + userId;
     }
+
+    public String getText(){
+        return this.explain;
+    }
+
 }

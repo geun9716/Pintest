@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.Toast;
@@ -25,20 +26,19 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.LoginActivity;
 import com.example.pintest1.MainActivity;
+import com.example.pintest1.MakeRoadActivity;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityMainBinding;
 import com.example.pintest1.databinding.FragmentUserBinding;
 import com.example.pintest1.model.ContentDTO;
 import com.example.pintest1.model.FollowDTO;
+import com.example.pintest1.model.RoadDTO;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -55,8 +55,9 @@ import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
 public class UserFragment extends Fragment {
 
+    private ArrayList<ContentDTO> contentDTOs;
     private ActivityMainBinding binding;
-    Context context;
+    private Context context;
 
     // Data Binding
     private FragmentUserBinding userbinding;
@@ -85,7 +86,7 @@ public class UserFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_user,container, false);
         context = container.getContext();
 
@@ -136,8 +137,22 @@ public class UserFragment extends Fragment {
                 }
             }
         });
+        Button button;
+        button = view.findViewById(R.id.add_road);
+        button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(v.getId() == R.id.add_road){
+                    Intent intent = new Intent(context, MakeRoadActivity.class);
+                    RoadDTO road = new RoadDTO(contentDTOs);
+                    intent.putExtra("Road", road);
+                    startActivity(intent);
+                }
+            }
+        });
         return view;
     }
+
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -192,8 +207,6 @@ public class UserFragment extends Fragment {
     }
 
     private class UserFragmentRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
-
-        private ArrayList<ContentDTO> contentDTOs;
 
         UserFragmentRecyclerViewAdapter(){
             contentDTOs = new ArrayList<ContentDTO>();
@@ -256,8 +269,10 @@ public class UserFragment extends Fragment {
                         if(documentSnapshot == null) return;
                         if(documentSnapshot != null)
                         {
-                            String url = documentSnapshot.getData().get(uid).toString();
-                            Glide.with(activity).load(url).apply(new RequestOptions().circleCrop()).into(userbinding.accountIvProfile);
+                            if(documentSnapshot.getData() != null){
+                                String url = documentSnapshot.getData().get(uid).toString();
+                                Glide.with(activity).load(url).apply(new RequestOptions().circleCrop()).into(userbinding.accountIvProfile);
+                            }
                         }
                     }
                 }
