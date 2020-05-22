@@ -77,19 +77,19 @@ public class DetailViewFragment extends Fragment {
             contentUidList = new ArrayList<>();
 
             firestore.collection("images").orderBy("timestamp", Query.Direction.DESCENDING).addSnapshotListener(
-                    new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
-                            contentDTOs.clear();
-                            contentUidList.clear();
-                            if (queryDocumentSnapshots == null) return ;
-                            for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
-                                contentDTOs.add(document.toObject(ContentDTO.class));
-                                contentUidList.add(document.getId());
-                            }
-                            notifyDataSetChanged();
+                new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                        contentDTOs.clear();
+                        contentUidList.clear();
+                        if (queryDocumentSnapshots == null) return ;
+                        for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
+                            contentDTOs.add(document.toObject(ContentDTO.class));
+                            contentUidList.add(document.getId());
                         }
-                    });
+                        notifyDataSetChanged();
+                    }
+                });
         }
 
         @Override
