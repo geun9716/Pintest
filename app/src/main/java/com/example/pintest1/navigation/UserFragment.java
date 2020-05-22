@@ -20,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -95,7 +96,7 @@ public class UserFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_user,container, false);
         context = container.getContext();
-
+        userbinding = FragmentUserBinding.bind(view);
         firebaseAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         uid = getArguments().getString("destinationUid");
@@ -143,17 +144,13 @@ public class UserFragment extends Fragment {
                 }
             }
         });
-        Button button;
-        button = view.findViewById(R.id.add_road);
-        button.setOnClickListener(new View.OnClickListener(){
+        userbinding.addRoad.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if(v.getId() == R.id.add_road){
-                    Intent intent = new Intent(context, MakeRoadActivity.class);
-                    RoadDTO road = new RoadDTO(contentDTOs);
-                    intent.putExtra("Road", road);
-                    startActivity(intent);
-                }
+                Intent intent = new Intent(context, MakeRoadActivity.class);
+                RoadDTO road = new RoadDTO(contentDTOs);
+                intent.putExtra("Road", road);
+                startActivity(intent);
             }
         });
         return view;
@@ -162,7 +159,7 @@ public class UserFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        userbinding = FragmentUserBinding.bind(getView());
+        //userbinding = FragmentUserBinding.bind(getView());
         binding.ivMenu.setVisibility(View.VISIBLE);
 
         if(getArguments() != null){

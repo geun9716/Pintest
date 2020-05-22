@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.databinding.DataBindingUtil;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,7 +41,7 @@ public class MakeRoadActivity extends AppCompatActivity {
         road = (RoadDTO) intent.getSerializableExtra("Road");
 
         RecyclerView rv = (RecyclerView) findViewById(R.id.recyclerview_makeroad);
-        rv.setLayoutManager(new LinearLayoutManager(getParent()));
+        rv.setLayoutManager(new GridLayoutManager(this,2));
         rv.setAdapter(new MakeRoadViewRecyclerAdapter());
     }
     private class MakeRoadViewRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
@@ -50,6 +51,7 @@ public class MakeRoadActivity extends AppCompatActivity {
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
             View view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.item_list, parent, false);
+
 
             return new CustomViewHolder(view);
         }
@@ -78,9 +80,10 @@ public class MakeRoadActivity extends AppCompatActivity {
             Glide.with(MakeRoadActivity.this)
                     .load(road.getPin(position).imageUrl)
                     .into(binding.listItemImage);
-            binding.listItemText.setText(road.getPin(position).getText());
-            binding.listItemCheckbox.setChecked(false);
 
+            binding.listItemText.setText(road.getPin(position).getText());
+
+            binding.listItemCheckbox.setChecked(false);
         }
 
         @Override

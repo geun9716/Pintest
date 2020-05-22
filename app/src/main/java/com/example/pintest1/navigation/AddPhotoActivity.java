@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -135,6 +136,7 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
 
 
                             Task<Uri> task = taskSnapshot.getMetadata().getReference().getDownloadUrl();
+
                             task.addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {

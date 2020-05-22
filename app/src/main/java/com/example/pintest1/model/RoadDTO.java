@@ -16,7 +16,6 @@ public class RoadDTO implements Serializable {
 
     public RoadDTO(ArrayList<ContentDTO> pins) {
         this.pins = pins;
-
     }
     public int getCountOfPins(){
         return pins.size();
