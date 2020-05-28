@@ -1,6 +1,7 @@
 package com.example.pintest1.navigation;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -102,7 +103,7 @@ public class DetailViewFragment extends Fragment {
 
         @SuppressLint("ClickableViewAccessibility")
         @Override
-        public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
 
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((CustomViewHolder) holder).getBinding();
@@ -158,7 +159,6 @@ public class DetailViewFragment extends Fragment {
                 }
             });
 
-
             if(contentDTOs.get(position).favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
                 //This is like status
                 binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite_border);
@@ -169,6 +169,16 @@ public class DetailViewFragment extends Fragment {
                 binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite);
             }
 
+            binding.detailviewitemCommentImageview.setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(v.getContext(), CommentActivity.class);
+                            intent.putExtra("contentUid", contentUidList.get(finalPosition));
+                            startActivity(intent);
+                        }
+                    }
+            );
 
         }
 
