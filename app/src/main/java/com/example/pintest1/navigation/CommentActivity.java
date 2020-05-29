@@ -95,8 +95,7 @@ public class CommentActivity extends AppCompatActivity {
         alarmDTO.uid = user.getUid();
         alarmDTO.kind = 1;
         alarmDTO.message = message;
-        alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
-                .format(new Date(System.currentTimeMillis()));
+        alarmDTO.timestamp = System.currentTimeMillis();
 
         FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
 

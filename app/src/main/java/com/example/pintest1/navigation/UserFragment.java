@@ -365,7 +365,7 @@ public class UserFragment extends Fragment {
                             followDTO = new FollowDTO();
                             followDTO.followingCount = 1;
                             followDTO.followings.put(uid, true);
-
+                            followerAlarm(uid);
                             transaction.set(tsDocFollowing, followDTO);
                             return null;
                         }
@@ -378,6 +378,7 @@ public class UserFragment extends Fragment {
                             //It add following third person when a third person do not follow me
                             followDTO.followingCount = followDTO.followingCount + 1;
                             followDTO.followings.put(uid, true);
+                            followerAlarm(uid);
                         }
                         transaction.set(tsDocFollowing, followDTO);
                         return null;
@@ -395,7 +396,7 @@ public class UserFragment extends Fragment {
                             followDTO = new FollowDTO();
                             followDTO.followerCount = 1;
                             followDTO.followers.put(currentUserUid, true);
-                            followerAlarm(uid);
+
                             transaction.set(tsDocFollower, followDTO);
                             return null;
                         }
@@ -408,7 +409,6 @@ public class UserFragment extends Fragment {
                             //It add follower third person when a third person do not follow me
                             followDTO.followerCount = followDTO.followerCount + 1;
                             followDTO.followers.put(currentUserUid, true);
-                            followerAlarm(uid);
                         }
                         transaction.set(tsDocFollower, followDTO);
                         return null;
@@ -420,12 +420,10 @@ public class UserFragment extends Fragment {
         AlarmDTO alarmDTO = new AlarmDTO();
 
         alarmDTO.destinationUid = destinationUid;
-        alarmDTO.userId = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        alarmDTO.uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        alarmDTO.userId = firebaseAuth.getCurrentUser().getEmail();
+        alarmDTO.uid = firebaseAuth.getCurrentUser().getUid();
         alarmDTO.kind = 2;
-
-        alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
-                .format(new Date(System.currentTimeMillis()));
+        alarmDTO.timestamp = System.currentTimeMillis();
 
         FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
     }

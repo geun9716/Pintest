@@ -106,7 +106,7 @@ public class DetailViewFragment extends Fragment {
 
         @SuppressLint("ClickableViewAccessibility")
         @Override
-        public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
+        public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
 
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((CustomViewHolder) holder).getBinding();
@@ -246,8 +246,7 @@ public class DetailViewFragment extends Fragment {
             alarmDTO.userId = user.getEmail();
             alarmDTO.uid = user.getUid();
             alarmDTO.kind = 0;
-            alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
-                    .format(new Date(System.currentTimeMillis()));
+            alarmDTO.timestamp = System.currentTimeMillis();
 
             FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
             }

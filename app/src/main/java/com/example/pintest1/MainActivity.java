@@ -102,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
                 return true;
 
             case R.id.action_favorite_alarm:
-
                 setToolbarDefault();
                 Fragment alarmFragment = new AlarmFragment();
 

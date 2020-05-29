@@ -18,6 +18,9 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ItemAlarmBinding;
 import com.example.pintest1.model.AlarmDTO;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
@@ -37,6 +40,7 @@ public class AlarmFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_alarm,container, false);
 
+
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.alarmfragment_recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         recyclerView.setAdapter(new AlarmRecyclerviewAdapter());
@@ -44,23 +48,21 @@ public class AlarmFragment extends Fragment {
         return view;
     }
     private class AlarmRecyclerviewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
-        ArrayList<AlarmDTO> alarmDTOs;
+        ArrayList<AlarmDTO> alarmDTOs= new ArrayList<AlarmDTO>();
 
-        public AlarmRecyclerviewAdapter(){
-            alarmDTOs = new ArrayList<AlarmDTO>();
+        AlarmRecyclerviewAdapter(){
             uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
             FirebaseFirestore.getInstance()
                     .collection("alarms")
-                    .whereEqualTo("destinationUid", uid)
-                    .orderBy("timestamp", Query.Direction.DESCENDING).addSnapshotListener(
+                    .whereEqualTo("destinationUid", uid).addSnapshotListener(
                     new EventListener<QuerySnapshot>() {
                         @Override
                         public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
                             alarmDTOs.clear();
-                            if (queryDocumentSnapshots == null) return ;
-                            for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
-                                alarmDTOs.add(document.toObject(AlarmDTO.class));
+                            if(queryDocumentSnapshots == null) return ;
+                            for(DocumentSnapshot documentSnapshot: queryDocumentSnapshots.getDocuments())
+                            {
+                                alarmDTOs.add(documentSnapshot.toObject(AlarmDTO.class));
                             }
                             notifyDataSetChanged();
                         }
@@ -91,7 +93,7 @@ public class AlarmFragment extends Fragment {
             final ItemAlarmBinding binding = ((CustomViewHolder) holder).getBinding();
             final int finalPosition = position;
 
-            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOs.get(position).uid).addSnapshotListener(
+            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOs.get(finalPosition).uid).addSnapshotListener(
                     new EventListener<DocumentSnapshot>() {
                         @Override
                         public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
