@@ -7,10 +7,8 @@ import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.Toast;
@@ -20,7 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -28,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.pintest1.ContentActivity;
 import com.example.pintest1.LoginActivity;
 import com.example.pintest1.MainActivity;
 import com.example.pintest1.MakeRoadActivity;
@@ -51,11 +49,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
-
-import org.w3c.dom.Document;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -249,14 +244,27 @@ public class UserFragment extends Fragment {
 
             ImageView imageView = new ImageView(parent.getContext());
             imageView.setLayoutParams(new LinearLayoutCompat.LayoutParams(width,width));
-            
+
             return new CustomViewHolder(imageView);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
+
+            ImageView imageView = ((CustomViewHolder) holder).imageView;
+            imageView.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, ContentActivity.class);
+                    ContentDTO contentDTO = contentDTOs.get(position);
+                    intent.putExtra("Content", contentDTO);
+                    startActivity(intent);
+                }
+            });
+
             Glide.with(holder.itemView.getContext()).load(contentDTOs.get(position).imageUrl)
-                    .apply(new RequestOptions().centerCrop()).into(((CustomViewHolder) holder).imageView);
+                    .apply(new RequestOptions().centerCrop()).into(imageView);
         }
 
         @Override
