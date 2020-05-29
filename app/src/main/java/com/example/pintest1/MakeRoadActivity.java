@@ -75,17 +75,26 @@ public class MakeRoadActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
-            binding = ((CustomViewHolder) holder).getBinding();
+            final ItemListBinding mybinding = ((CustomViewHolder) holder).getBinding();
 
             Glide.with(MakeRoadActivity.this)
                     .load(road.getPin(position).imageUrl)
-                    .into(binding.listItemImage);
+                    .into(mybinding.listItemImage);
 
-            binding.listItemText.setText(road.getPin(position).getText());
+            mybinding.listItemText.setText(road.getPin(position).getText());
 
-            binding.listItemCheckbox.setChecked(false);
+            mybinding.listItemCheckbox.setChecked(false);
+
+            mybinding.listItemImage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mybinding.listItemCheckbox.isChecked() == false)
+                        mybinding.listItemCheckbox.setChecked(true);
+                    else
+                        mybinding.listItemCheckbox.setChecked(false);
+                }
+            });
         }
-
         @Override
         public int getItemCount() {
             return road.getCountOfPins();
