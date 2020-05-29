@@ -91,14 +91,14 @@ public class AlarmFragment extends Fragment {
             final ItemAlarmBinding binding = ((CustomViewHolder) holder).getBinding();
             final int finalPosition = position;
 
-            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOs.get(position).destinationUid).addSnapshotListener(
+            FirebaseFirestore.getInstance().collection("profileImages").document(alarmDTOs.get(position).uid).addSnapshotListener(
                     new EventListener<DocumentSnapshot>() {
                         @Override
                         public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
                             if(documentSnapshot == null) return;
                             if(documentSnapshot.getData() != null)
                             {
-                                String url = documentSnapshot.getData().get(alarmDTOs.get(finalPosition).destinationUid).toString();
+                                String url = documentSnapshot.getData().get(alarmDTOs.get(finalPosition).uid).toString();
                                 Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.alramitemImageviewProfile);
                             }
                         }
