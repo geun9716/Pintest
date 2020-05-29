@@ -20,6 +20,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.*;
 import com.example.pintest1.databinding.ItemDetailviewBinding;
+import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -32,7 +33,9 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static com.example.pintest1.util.StatusCode.FRAGMENT_ARG;
 
@@ -175,6 +178,7 @@ public class DetailViewFragment extends Fragment {
                         public void onClick(View v) {
                             Intent intent = new Intent(v.getContext(), CommentActivity.class);
                             intent.putExtra("contentUid", contentUidList.get(finalPosition));
+                            intent.putExtra("destinationUid", contentDTOs.get(finalPosition).uid);
                             startActivity(intent);
                         }
                     }
@@ -226,14 +230,26 @@ public class DetailViewFragment extends Fragment {
                         //When the button is not clicked
                         contentDTO.favoriteCount = contentDTO.favoriteCount+1;
                         contentDTO.favorites.put(uid,true);
+                        favoriteAlarm(contentDTOs.get(finalPosition).uid);
                     }
                     transaction.set(tsDoc,contentDTO);
 
                     return null;
                 }
             });
-
-
         }
+        public void favoriteAlarm(String destinationUid) {
+
+            AlarmDTO alarmDTO = new AlarmDTO();
+
+            alarmDTO.destinationUid = destinationUid;
+            alarmDTO.userId = user.getEmail();
+            alarmDTO.uid = user.getUid();
+            alarmDTO.kind = 0;
+            alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
+                    .format(new Date(System.currentTimeMillis()));
+
+            FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
+            }
     }
 }

@@ -3,26 +3,21 @@ package com.example.pintest1.navigation;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.ClipData;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityCommentBinding;
 import com.example.pintest1.databinding.ItemCommentviewBinding;
+import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -36,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.annotation.Nullable;
-
-import static com.example.pintest1.util.StatusCode.FRAGMENT_ARG;
 
 public class CommentActivity extends AppCompatActivity {
     private ActivityCommentBinding binding;
@@ -57,7 +50,6 @@ public class CommentActivity extends AppCompatActivity {
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         destinationUid = getIntent().getStringExtra("destinationUid");
-
         contentUid = getIntent().getStringExtra("contentUid");
 
         commentRecyclerView = (RecyclerView) findViewById(R.id.comment_recyclerview);
@@ -85,8 +77,8 @@ public class CommentActivity extends AppCompatActivity {
                                 .set(comment);
 
                         binding.commentEditMessage.setText("");
-
                         // Comment 입력 시 commentAlarm을 호출
+                        commentAlarm(destinationUid, comment.comment);
                     }
                 }
         );
@@ -94,6 +86,21 @@ public class CommentActivity extends AppCompatActivity {
 
     }
 
+    private void commentAlarm(String destinationUid, String message) {
+
+        AlarmDTO alarmDTO = new AlarmDTO();
+
+        alarmDTO.destinationUid = destinationUid;
+        alarmDTO.userId = user.getEmail();
+        alarmDTO.uid = user.getUid();
+        alarmDTO.kind = 1;
+        alarmDTO.message = message;
+        alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
+                .format(new Date(System.currentTimeMillis()));
+
+        FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
+
+    }
     private class CommentRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private ArrayList<ContentDTO.Comment> comments;
 
