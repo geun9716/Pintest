@@ -34,6 +34,7 @@ import com.example.pintest1.MakeRoadActivity;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityMainBinding;
 import com.example.pintest1.databinding.FragmentUserBinding;
+import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
 import com.example.pintest1.model.FollowDTO;
 import com.example.pintest1.model.RoadDTO;
@@ -56,7 +57,9 @@ import com.google.firebase.firestore.Transaction;
 
 import org.w3c.dom.Document;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
@@ -384,7 +387,7 @@ public class UserFragment extends Fragment {
                             followDTO = new FollowDTO();
                             followDTO.followerCount = 1;
                             followDTO.followers.put(currentUserUid, true);
-
+                            followerAlarm(uid);
                             transaction.set(tsDocFollower, followDTO);
                             return null;
                         }
@@ -397,12 +400,28 @@ public class UserFragment extends Fragment {
                             //It add follower third person when a third person do not follow me
                             followDTO.followerCount = followDTO.followerCount + 1;
                             followDTO.followers.put(currentUserUid, true);
+                            followerAlarm(uid);
                         }
                         transaction.set(tsDocFollower, followDTO);
                         return null;
                     }
                 });
     }
+    private void followerAlarm(String destinationUid) {
+
+        AlarmDTO alarmDTO = new AlarmDTO();
+
+        alarmDTO.destinationUid = destinationUid;
+        alarmDTO.userId = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        alarmDTO.uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        alarmDTO.kind = 2;
+
+        alarmDTO.timestamp = new SimpleDateFormat("yyMMdd_hhmmss")
+                .format(new Date(System.currentTimeMillis()));
+
+        FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
+    }
+
 
 
     private void SignOut() {

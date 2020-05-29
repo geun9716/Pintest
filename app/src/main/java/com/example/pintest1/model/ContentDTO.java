@@ -24,6 +24,7 @@ public class ContentDTO implements Serializable {
         public String uid;
         public String userId;
         public String comment;
+        public String timestamp;
     }
 
     @Override
