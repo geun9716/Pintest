@@ -26,6 +26,7 @@ import com.example.pintest1.navigation.AddPhotoActivity;
 import com.example.pintest1.navigation.DetailViewFragment;
 import com.example.pintest1.navigation.GridFragment;
 import com.example.pintest1.navigation.AlarmFragment;
+import com.example.pintest1.navigation.RoadFragment;
 import com.example.pintest1.navigation.UserFragment;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -82,14 +83,14 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             case R.id.action_search:
                 setToolbarDefault();
-                Fragment gridFragment = new GridFragment();
+                Fragment roadFragment = new RoadFragment();
 
                 Bundle bundle_1 = new Bundle();
                 bundle_1.putInt(FRAGMENT_ARG, 1);
 
-                gridFragment.setArguments(bundle_1);
+                roadFragment.setArguments(bundle_1);
 
-                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, gridFragment).commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, roadFragment).commit();
 
                 return true;
 

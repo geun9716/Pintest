@@ -14,6 +14,7 @@ public class RoadDTO implements Serializable {
     private ArrayList<ContentDTO> pins;
     private String timestamp;
 
+    public RoadDTO(){}
     public RoadDTO(ArrayList<ContentDTO> pins) {
         this.pins = pins;
     }
