@@ -5,9 +5,11 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.Toast;
 
@@ -29,6 +31,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -94,6 +98,25 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
         if (requestCode == PICK_IMAGE_FROM_ALBUM && resultCode == RESULT_OK) {
 
             contentUri = data.getData();
+
+            String result = null;
+            if (contentUri.getScheme().equals("content")) {
+                Cursor cursor = getContentResolver().query(contentUri, null, null, null, null);
+                try {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+
+                } finally {
+                    if (cursor != null) {
+                        cursor.close();
+                    }
+                }
+            }
+            if (result == null) {
+                result = contentUri.getLastPathSegment();
+            }
+
 
             //이미지뷰에 이미지 세팅
             binding.addphotoImage.setImageURI(data.getData());
