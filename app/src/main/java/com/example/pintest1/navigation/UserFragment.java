@@ -165,6 +165,7 @@ public class UserFragment extends Fragment {
 
             //MyPage
             if(uid == currentUserUid){
+
                 userbinding.accountBtnFollowSignout.setText(R.string.signout);
                 userbinding.accountBtnFollowSignout.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -198,15 +199,21 @@ public class UserFragment extends Fragment {
             }
         }
         //Profile Image Click Listener
-        userbinding.accountIvProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-                Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                photoPickerIntent.setType("image/*");
-                activity.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM);
+        if(getArguments() != null) {
+            uid = getArguments().getString("destinationUid");
+            //MyPage
+            if (uid == currentUserUid) {
+                userbinding.accountIvProfile.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+                        Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                        photoPickerIntent.setType("image/*");
+                        activity.startActivityForResult(photoPickerIntent, PICK_PROFILE_FROM_ALBUM);
+                    }
+                });
             }
-        });
+        }
 
         getProfileImage();
         getFollower();

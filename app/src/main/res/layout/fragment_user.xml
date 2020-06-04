@@ -33,6 +33,7 @@
                 android:layout_height="100dp"
                 android:layout_alignParentStart="true"
                 android:contentDescription="@string/profile"
+                android:layout_margin="10dp"
                 android:src="@drawable/ic_account" />
 
 
@@ -50,7 +51,7 @@
                 android:layout_height="match_parent"
                 android:layout_above="@id/account_btn_follow_signout"
                 android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="3dp"
                 android:layout_marginTop="8dp"
                 android:layout_toEndOf="@id/account_iv_profile"
                 android:baselineAligned="true"
