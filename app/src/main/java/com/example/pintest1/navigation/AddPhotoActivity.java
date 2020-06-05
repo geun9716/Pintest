@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.view.View;
@@ -31,11 +32,13 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static android.os.Environment.DIRECTORY_DCIM;
 import static com.example.pintest1.util.StatusCode.PICK_IMAGE_FROM_ALBUM;
 
 public class AddPhotoActivity extends AppCompatActivity implements View.OnClickListener {
@@ -50,6 +53,8 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
     //private FirebaseDatabase firebaseDatabase;
     private FirebaseFirestore db;
     private FirebaseAuth firebaseAuth;
+
+    String filename;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,8 +122,8 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
                 result = contentUri.getLastPathSegment();
             }
 
-
             //이미지뷰에 이미지 세팅
+            filename = Environment.getExternalStoragePublicDirectory(DIRECTORY_DCIM)+"/Camera/"+result;
             binding.addphotoImage.setImageURI(data.getData());
         } else {
             finish();
@@ -174,9 +179,27 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
                                     //게시물 업로드 시간
                                     contentDTO.timestamp = simpleDateFormat.format(date);
 
+
+                                    try {
+                                        float []GPS = new float[2];
+                                        ExifInterface exif = new ExifInterface(filename);
+                                        if (exif.getLatLong(GPS))
+                                        {
+                                            contentDTO.Latitude = Math.round(GPS[0]*1000000)/1000000.0;
+                                            contentDTO.Longitude = Math.round(GPS[1]*1000000)/1000000.0;
+                                        }
+                                        else        //Photo haven't GPS info
+                                        {
+
+                                        }
+                                    } catch (IOException e) {
+                                        //Can't find photos
+                                        contentDTO.Latitude = 0;
+                                        contentDTO.Longitude = 0;
+                                    }
+
                                     //게시물을 데이터를 생성 및 엑티비티 종료
                                     db.collection("images").document().set(contentDTO);
-
                                     setResult(RESULT_OK);
                                 }
                             });
