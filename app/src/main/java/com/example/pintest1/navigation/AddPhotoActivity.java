@@ -9,6 +9,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.view.View;
@@ -32,8 +33,11 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -121,7 +125,6 @@ public class AddPhotoActivity extends AppCompatActivity implements View.OnClickL
             if (result == null) {
                 result = contentUri.getLastPathSegment();
             }
-
             //이미지뷰에 이미지 세팅
             filename = Environment.getExternalStoragePublicDirectory(DIRECTORY_DCIM)+"/Camera/"+result;
             binding.addphotoImage.setImageURI(data.getData());
