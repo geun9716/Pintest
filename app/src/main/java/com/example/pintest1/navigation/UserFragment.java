@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.Toast;
@@ -18,9 +19,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -32,6 +35,7 @@ import com.example.pintest1.MakeRoadActivity;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ActivityMainBinding;
 import com.example.pintest1.databinding.FragmentUserBinding;
+import com.example.pintest1.databinding.ItemRoadBinding;
 import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
 import com.example.pintest1.model.FollowDTO;
@@ -49,6 +53,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 
@@ -60,6 +65,7 @@ import static com.example.pintest1.util.StatusCode.PICK_PROFILE_FROM_ALBUM;
 
 public class UserFragment extends Fragment {
 
+    private ArrayList<RoadDTO> roadDTOs;
     private ArrayList<ContentDTO> contentDTOs;
     private ActivityMainBinding binding;
     private Context context;
@@ -221,6 +227,9 @@ public class UserFragment extends Fragment {
 
         userbinding.accountRecyclerviewPin.setLayoutManager(new GridLayoutManager(getActivity(),3));
         userbinding.accountRecyclerviewPin.setAdapter(new UserFragmentRecyclerViewAdapter());
+
+        userbinding.accountRecyclerviewRoad.setLayoutManager(new LinearLayoutManager(getActivity()));
+        userbinding.accountRecyclerviewRoad.setAdapter(new UserFragmentRoadAdapter());
     }
 
 
@@ -284,6 +293,75 @@ public class UserFragment extends Fragment {
             CustomViewHolder(ImageView imageView) {
                 super(imageView);
                 this.imageView = imageView;
+            }
+        }
+    }
+
+    private class UserFragmentRoadAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+
+        UserFragmentRoadAdapter(){
+            roadDTOs = new ArrayList<RoadDTO>();
+            FirebaseFirestore.getInstance().collection("Roads")
+                    .whereEqualTo("uId", uid)
+//                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .addSnapshotListener(
+                            new EventListener<QuerySnapshot>() {
+                                @Override
+                                public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                                    roadDTOs.clear();
+                                    if(queryDocumentSnapshots == null) return ;
+                                    for(DocumentSnapshot documentSnapshot: queryDocumentSnapshots.getDocuments())
+                                    {
+                                            roadDTOs.add(documentSnapshot.toObject(RoadDTO.class));
+                                    }
+                                    notifyDataSetChanged();
+                                }
+                            }
+                    );
+
+        }
+
+        @NonNull
+        @Override
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_road, parent, false);
+
+            return new UserFragment.UserFragmentRoadAdapter.CustomViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
+            RoadDTO road = roadDTOs.get(position);
+
+            final ItemRoadBinding binding = ((UserFragment.UserFragmentRoadAdapter.CustomViewHolder) holder).getBinding();
+
+            Glide.with(holder.itemView).load(road.getPin(0).imageUrl).into(binding.roadImage1);
+
+            if (road.getPins().size() > 1)
+                Glide.with(holder.itemView).load(road.getPin(1).imageUrl).into(binding.roadImage2);
+            if (road.getPins().size() > 2)
+                Glide.with(holder.itemView).load(road.getPin(2).imageUrl).into(binding.roadImage3);
+
+        }
+
+        @Override
+        public int getItemCount() {
+            return roadDTOs.size();
+        }
+
+        private class CustomViewHolder extends RecyclerView.ViewHolder {
+            private ItemRoadBinding binding;
+
+            CustomViewHolder(View itemView) {
+                super(itemView);
+
+                binding = DataBindingUtil.bind(itemView);
+            }
+
+            ItemRoadBinding getBinding() {
+
+                return binding;
             }
         }
     }

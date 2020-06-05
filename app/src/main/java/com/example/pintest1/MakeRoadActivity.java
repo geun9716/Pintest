@@ -130,6 +130,18 @@ public class MakeRoadActivity extends AppCompatActivity {
                     }
                 }
             });
+            mybinding.listItemCheckbox.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View v) {
+                    if (mybinding.listItemCheckbox.isChecked() == true) {
+                        contentDTOs.add(road.getPin(position));
+                    }
+                    else {
+                        contentDTOs.remove(road.getPin(position));
+                    }
+                }
+            });
         }
         @Override
         public int getItemCount() {
