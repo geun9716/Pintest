@@ -124,6 +124,11 @@ public class ContentActivity extends AppCompatActivity {
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, final int position) {
+<<<<<<< HEAD
+=======
+            if(road != null)
+                contentDTO = road.getPin(position);
+>>>>>>> bde1110ef83885dc5164f277758314ce6b466d9c
 
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((ContentActivity.ContentViewRecyclerAdapter.CustomViewHolder) holder).getBinding();
@@ -137,19 +142,20 @@ public class ContentActivity extends AppCompatActivity {
             });
 
             //Profile Image
-            firestore.collection("profileImages").document(contentDTOs.get(finalPosition).uid).addSnapshotListener(
-                    new EventListener<DocumentSnapshot>() {
-                        @Override
-                        public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
-                            if(documentSnapshot == null) return;
-                            if(documentSnapshot.getData() != null)
-                            {
-                                String url = documentSnapshot.getData().get(contentDTOs.get(finalPosition).uid).toString();
-                                Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.detailviewitemProfileImage);
+            if(road != null) {
+                firestore.collection("profileImages").document(contentDTOs.get(finalPosition).uid).addSnapshotListener(
+                        new EventListener<DocumentSnapshot>() {
+                            @Override
+                            public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                                if (documentSnapshot == null) return;
+                                if (documentSnapshot.getData() != null) {
+                                    String url = documentSnapshot.getData().get(contentDTOs.get(finalPosition).uid).toString();
+                                    Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.detailviewitemProfileImage);
+                                }
                             }
                         }
-                    }
-            );
+                );
+            }
             /*binding.detailviewitemProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -167,16 +173,16 @@ public class ContentActivity extends AppCompatActivity {
             });*/
 
             // 유저 아이디
-            binding.detailviewitemProfileTextview.setText(contentDTOs.get(position).userId);
+            binding.detailviewitemProfileTextview.setText(contentDTO.userId);
 
             // 가운데 이미지
-            Glide.with(holder.itemView).load(contentDTOs.get(position).imageUrl).into(binding.detailviewitemImageviewContent);
+            Glide.with(holder.itemView).load(contentDTO.imageUrl).into(binding.detailviewitemImageviewContent);
 
             // 설명 텍스트
-            binding.detailviewitemExplainTextview.setText(contentDTOs.get(position).explain);
+            binding.detailviewitemExplainTextview.setText(contentDTO.explain);
 
             //좋아요
-            binding.detailviewitemFavoritecounterTextview.setText("Likes " + contentDTOs.get(position).favoriteCount);
+            binding.detailviewitemFavoritecounterTextview.setText("Likes " + contentDTO.favoriteCount);
 
             //This code is when the button is clicked
             binding.detailviewitemFavoriteImageview.setOnTouchListener(new View.OnTouchListener() {
@@ -187,7 +193,7 @@ public class ContentActivity extends AppCompatActivity {
                 }
             });
 
-            if(contentDTOs.get(position).favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
+            if(contentDTO.favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
                 //This is like status
                 binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite_border);
             }
@@ -203,7 +209,7 @@ public class ContentActivity extends AppCompatActivity {
                         public void onClick(View v) {
                             Intent intent = new Intent(v.getContext(), CommentActivity.class);
                             //intent.putExtra("contentUid", contentUidList.get(finalPosition));
-                            intent.putExtra("destinationUid", contentDTOs.get(finalPosition).uid);
+                            intent.putExtra("destinationUid",contentDTO.uid);
                             startActivity(intent);
                         }
                     }
@@ -212,7 +218,11 @@ public class ContentActivity extends AppCompatActivity {
         }
         @Override
         public int getItemCount() {
-            return contentDTOs.size();
+            if(road == null)
+                return 1;
+            else
+                return contentDTOs.size();
+
         }
 
         private void favoriteEvent(int position){
