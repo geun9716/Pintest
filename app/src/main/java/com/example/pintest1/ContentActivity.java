@@ -124,11 +124,8 @@ public class ContentActivity extends AppCompatActivity {
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, final int position) {
-<<<<<<< HEAD
-=======
             if(road != null)
                 contentDTO = road.getPin(position);
->>>>>>> bde1110ef83885dc5164f277758314ce6b466d9c
 
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((ContentActivity.ContentViewRecyclerAdapter.CustomViewHolder) holder).getBinding();
