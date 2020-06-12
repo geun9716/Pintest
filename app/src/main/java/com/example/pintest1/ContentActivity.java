@@ -1,6 +1,7 @@
 package com.example.pintest1;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -8,19 +9,28 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.example.pintest1.databinding.ItemDetailviewBinding;
+import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
+import com.example.pintest1.model.RoadDTO;
 import com.example.pintest1.navigation.CommentActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Transaction;
 
 public class ContentActivity extends AppCompatActivity {
 
     ContentDTO contentDTO;
-
+    RoadDTO road;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,7 +38,7 @@ public class ContentActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         contentDTO = (ContentDTO) intent.getSerializableExtra("Content");
-
+        road = (RoadDTO) intent.getSerializableExtra("Road");
         RecyclerView rv = (RecyclerView) findViewById(R.id.recyclerview_content);
         rv.setLayoutManager(new GridLayoutManager(this,1));
         rv.setAdapter(new ContentActivity.ContentViewRecyclerAdapter());
@@ -63,7 +73,10 @@ public class ContentActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
+
+            if(road != null)
+                contentDTO = road.getPin(position);
 
             int width = getResources().getDisplayMetrics().widthPixels / 3;
             final ItemDetailviewBinding binding = ((ContentActivity.ContentViewRecyclerAdapter.CustomViewHolder) holder).getBinding();
@@ -76,26 +89,22 @@ public class ContentActivity extends AppCompatActivity {
             binding.detailviewitemFavoritecounterTextview.setText(Integer.toString(contentDTO.favoriteCount));
             binding.detailviewitemExplainTextview.setText(contentDTO.explain);
 
-            binding.detailviewitemFavoriteImageview.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View v) {
-                    //좋아요 버튼 눌렀을 경우 좋아요 이벤트
-
-                }
-            });
-            binding.detailviewitemCommentImageview.setOnClickListener(new View.OnClickListener(){
-
-                @Override
-                public void onClick(View v) {
-                    //댓글 버튼 눌렀을 경우 댓글 표시
-
-                }
-            });
+            if(contentDTO.favorites.containsKey(FirebaseAuth.getInstance().getCurrentUser().getUid())){
+                //This is like status
+                binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite_border);
+            }
+            else
+            {
+                //This is unlike status
+                binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite);
+            }
         }
         @Override
         public int getItemCount() {
-            return 1;
+            if(road == null)
+                return 1;
+            else
+                return road.getPins().size();
         }
     }
 }
