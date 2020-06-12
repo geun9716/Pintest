@@ -27,6 +27,9 @@ import com.example.pintest1.model.RoadDTO;
 import com.example.pintest1.navigation.CommentActivity;
 import com.example.pintest1.navigation.DetailViewFragment;
 import com.example.pintest1.navigation.UserFragment;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -34,6 +37,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 
 import java.util.ArrayList;
@@ -70,8 +75,26 @@ public class ContentActivity extends AppCompatActivity {
 
         ContentViewRecyclerAdapter(){
             contentDTOs = new ArrayList<>();
-            if (road != null)
-                contentDTOs = road.getPins();
+
+            for(int i = 0 ; i < road.getpIDs().size(); i++)
+            {
+                firestore.collection("images").document(road.getpID(i)).get().addOnCompleteListener(
+                        new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if(task.isSuccessful())
+                                {
+                                    DocumentSnapshot document = task.getResult();
+                                    if (document.exists()) {
+                                        contentDTOs.add(document.toObject(ContentDTO.class));
+                                    }
+                                }
+                                notifyDataSetChanged();
+                            }
+                        }
+                );
+            }
+
         }
 
         @NonNull
@@ -101,6 +124,7 @@ public class ContentActivity extends AppCompatActivity {
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, final int position) {
+
             final int finalPosition = position;
             final ItemDetailviewBinding binding = ((ContentActivity.ContentViewRecyclerAdapter.CustomViewHolder) holder).getBinding();
 

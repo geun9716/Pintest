@@ -24,6 +24,7 @@ import com.example.pintest1.databinding.ItemRoadBinding;
 import com.example.pintest1.model.AlarmDTO;
 import com.example.pintest1.model.ContentDTO;
 import com.example.pintest1.model.RoadDTO;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -38,8 +39,7 @@ public class RoadFragment extends Fragment {
     Context context;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         context = container.getContext();
         View view = inflater.inflate(R.layout.fragment_road, container, false);
 
@@ -58,7 +58,7 @@ public class RoadFragment extends Fragment {
         RoadViewRecyclerAdapter(){
             roadDTOs = new ArrayList<RoadDTO>();
             FirebaseFirestore.getInstance().collection("Roads")
-                    .orderBy("timestamp", Query.Direction.DESCENDING)
+//                    .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener(
                     new EventListener<QuerySnapshot>() {
                         @Override
@@ -104,12 +104,12 @@ public class RoadFragment extends Fragment {
             RoadDTO road = roadDTOs.get(position);
             final ItemRoadBinding binding = ((CustomViewHolder) holder).getBinding();
 
-            Glide.with(holder.itemView).load(road.getPin(0).imageUrl).into(binding.roadImage1);
+            Glide.with(holder.itemView).load(road.getImageURL(0)).into(binding.roadImage1);
 
             if(road.getPins().size() > 1)
-                Glide.with(holder.itemView).load(road.getPin(1).imageUrl).into(binding.roadImage2);
+                Glide.with(holder.itemView).load(road.getImageURL(1)).into(binding.roadImage2);
             if(road.getPins().size() > 2)
-                Glide.with(holder.itemView).load(road.getPin(2).imageUrl).into(binding.roadImage3);
+                Glide.with(holder.itemView).load(road.getImageURL(2)).into(binding.roadImage3);
 
             binding.roadView.setOnClickListener(new View.OnClickListener(){
 

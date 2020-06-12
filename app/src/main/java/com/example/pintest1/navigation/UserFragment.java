@@ -338,12 +338,12 @@ public class UserFragment extends Fragment {
 
             final ItemRoadBinding binding = ((UserFragment.UserFragmentRoadAdapter.CustomViewHolder) holder).getBinding();
 
-            Glide.with(holder.itemView).load(road.getPin(0).imageUrl).into(binding.roadImage1);
+            Glide.with(holder.itemView).load(road.getImageURL(0)).into(binding.roadImage1);
 
             if (road.getPins().size() > 1)
-                Glide.with(holder.itemView).load(road.getPin(1).imageUrl).into(binding.roadImage2);
+                Glide.with(holder.itemView).load(road.getImageURL(1)).into(binding.roadImage2);
             if (road.getPins().size() > 2)
-                Glide.with(holder.itemView).load(road.getPin(2).imageUrl).into(binding.roadImage3);
+                Glide.with(holder.itemView).load(road.getImageURL(2)).into(binding.roadImage3);
 
             binding.roadView.setOnClickListener(new View.OnClickListener(){
                 @Override

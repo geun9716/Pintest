@@ -51,6 +51,7 @@ public class MakeRoadActivity extends AppCompatActivity {
     private RoadDTO road;
     private ArrayList<ContentDTO> pins;
     private ArrayList<String> pIDs;
+    private ArrayList<String> imageURLs;
     private ArrayList<ContentDTO> contentDTOs ;
     private ArrayList<String> contentUidList;
     @Override
@@ -60,6 +61,7 @@ public class MakeRoadActivity extends AppCompatActivity {
 
         pins = new ArrayList<ContentDTO>();
         pIDs = new ArrayList<String>();
+        imageURLs = new ArrayList<String>();
 
         auth = FirebaseAuth.getInstance();
         Intent intent = getIntent();
@@ -77,7 +79,7 @@ public class MakeRoadActivity extends AppCompatActivity {
                 if(contentDTOs.isEmpty()){
                     return;
                 }
-                RoadDTO newRoad = new RoadDTO(pins, pIDs);
+                RoadDTO newRoad = new RoadDTO(pins, pIDs, imageURLs);
                 newRoad.setuId(auth.getCurrentUser().getUid());
                 newRoad.setuserId(auth.getCurrentUser().getEmail());
                 newRoad.setTimestamp();
@@ -153,11 +155,13 @@ public class MakeRoadActivity extends AppCompatActivity {
                     if (mybinding.listItemCheckbox.isChecked() == false) {
                         pins.add(contentDTOs.get(finalPosition));
                         pIDs.add(contentUidList.get(finalPosition));
+                        imageURLs.add(contentDTOs.get(finalPosition).imageUrl);
                         mybinding.listItemCheckbox.setChecked(true);
                     }
                     else {
                         pins.remove(contentDTOs.get(finalPosition));
                         pIDs.remove(contentUidList.get(finalPosition));
+                        imageURLs.remove(contentDTOs.get(finalPosition).imageUrl);
                         mybinding.listItemCheckbox.setChecked(false);
                     }
                 }
@@ -169,10 +173,12 @@ public class MakeRoadActivity extends AppCompatActivity {
                     if (mybinding.listItemCheckbox.isChecked() == true) {
                         pins.add(contentDTOs.get(finalPosition));
                         pIDs.add(contentUidList.get(finalPosition));
+                        imageURLs.add(contentDTOs.get(finalPosition).imageUrl);
                     }
                     else {
                         pins.remove(contentDTOs.get(finalPosition));
                         pIDs.remove(contentUidList.get(finalPosition));
+                        imageURLs.remove(contentDTOs.get(finalPosition).imageUrl);
                     }
                 }
             });
