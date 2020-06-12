@@ -152,8 +152,10 @@ public class UserFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, MakeRoadActivity.class);
-                RoadDTO road = new RoadDTO(contentDTOs);
-                intent.putExtra("Road", road);
+                if (uid == currentUserUid)
+                    intent.putExtra("destinationUid", currentUserUid);
+                /*RoadDTO road = new RoadDTO(contentDTOs);
+                intent.putExtra("Road", road);*/
                 startActivity(intent);
             }
         });

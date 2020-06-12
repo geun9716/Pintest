@@ -111,22 +111,22 @@ public class AlarmFragment extends Fragment {
                     }
             );
 
-            SpannableString spannableString = new SpannableString(alarmDTOs.get(position).userId);
-            spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, alarmDTOs.get(position).userId.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            binding.alramitemTextviewProfile.setText(alarmDTOs.get(position).userId);
+
             switch (alarmDTOs.get(position).kind) {
 
                 case 0:
-                    String str_0 = spannableString + getString(R.string.alarm_favorite);
+                    String str_0 = getString(R.string.alarm_favorite);
                     binding.alramitemTextviewComment.setText(str_0);
                     break;
 
                 case 1:
-                    String str_1 = spannableString + getString(R.string.alarm_comment) + alarmDTOs.get(position).message;
+                    String str_1 = getString(R.string.alarm_comment) + alarmDTOs.get(position).message;
                     binding.alramitemTextviewComment.setText(str_1);
                     break;
 
                 case 2:
-                    String str_2 = spannableString + getString(R.string.alarm_follow);
+                    String str_2 = getString(R.string.alarm_follow);
                     binding.alramitemTextviewComment.setText(str_2);
                     break;
             }

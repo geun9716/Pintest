@@ -3,6 +3,8 @@ package com.example.pintest1.model;
 import android.net.Uri;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +19,7 @@ public class ContentDTO implements Serializable {
     public double Longitude;
     public int favoriteCount = 0;
     public Map<String, Boolean> favorites = new HashMap<>();
-    public Map<String, Comment> comments;
+    public ArrayList<Comment> comments = new ArrayList<>();
 
     public static class Comment {
 

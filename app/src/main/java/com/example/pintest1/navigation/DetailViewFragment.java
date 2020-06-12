@@ -113,17 +113,17 @@ public class DetailViewFragment extends Fragment {
 
             //Profile Image
             firestore.collection("profileImages").document(contentDTOs.get(finalPosition).uid).addSnapshotListener(
-                    new EventListener<DocumentSnapshot>() {
-                        @Override
-                        public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
-                            if(documentSnapshot == null) return;
-                            if(documentSnapshot.getData() != null)
-                            {
-                                String url = documentSnapshot.getData().get(contentDTOs.get(finalPosition).uid).toString();
-                                Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.detailviewitemProfileImage);
+                            new EventListener<DocumentSnapshot>() {
+                                @Override
+                                public void onEvent(@javax.annotation.Nullable DocumentSnapshot documentSnapshot, @javax.annotation.Nullable FirebaseFirestoreException e) {
+                                    if(documentSnapshot == null) return;
+                                    if(documentSnapshot.getData() != null)
+                                    {
+                                        String url = documentSnapshot.getData().get(contentDTOs.get(finalPosition).uid).toString();
+                                        Glide.with(holder.itemView).load(url).apply(new RequestOptions().circleCrop()).into(binding.detailviewitemProfileImage);
+                                    }
+                                }
                             }
-                        }
-                    }
             );
             binding.detailviewitemProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override

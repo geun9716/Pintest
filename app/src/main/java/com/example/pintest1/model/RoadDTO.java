@@ -12,11 +12,13 @@ public class RoadDTO implements Serializable {
     private String uId;
     private String userId;
     private ArrayList<ContentDTO> pins;
+    private ArrayList<String> pIDs;
     private String timestamp;
 
     public RoadDTO(){}
-    public RoadDTO(ArrayList<ContentDTO> pins) {
+    public RoadDTO(ArrayList<ContentDTO> pins, ArrayList<String> pIDs) {
         this.pins = pins;
+        this.pIDs = pIDs;
     }
     public void setuId(String uId){
         this.uId = uId;
@@ -32,10 +34,14 @@ public class RoadDTO implements Serializable {
     public String getuId(){return this.uId;}
     public String getuserId(){return this.userId;}
     public ArrayList<ContentDTO> getPins(){return this.pins;}
+    public ArrayList<String> getpID(){return this.pIDs;}
     public String getTimestamp(){return this.timestamp;}
 
+    public String getpID(int index){return pIDs.get(index);}
     public ContentDTO getPin(int index){
         return pins.get(index);
     }
+
+
 }
 
