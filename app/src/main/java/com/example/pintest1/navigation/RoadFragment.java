@@ -1,6 +1,7 @@
 package com.example.pintest1.navigation;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.example.pintest1.ContentActivity;
 import com.example.pintest1.MakeRoadActivity;
 import com.example.pintest1.R;
 import com.example.pintest1.databinding.ItemListBinding;
@@ -33,10 +35,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import java.util.ArrayList;
 
 public class RoadFragment extends Fragment {
+    Context context;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        context = container.getContext();
         View view = inflater.inflate(R.layout.fragment_road, container, false);
 
 
@@ -107,6 +111,15 @@ public class RoadFragment extends Fragment {
             if(road.getPins().size() > 2)
                 Glide.with(holder.itemView).load(road.getPin(2).imageUrl).into(binding.roadImage3);
 
+            binding.roadView.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, ContentActivity.class);
+                    intent.putExtra("Road", roadDTOs.get(position));
+                    startActivity(intent);
+                }
+            });
 
         }
         @Override

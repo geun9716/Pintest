@@ -332,7 +332,7 @@ public class UserFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
-            RoadDTO road = roadDTOs.get(position);
+            final RoadDTO road = roadDTOs.get(position);
 
             final ItemRoadBinding binding = ((UserFragment.UserFragmentRoadAdapter.CustomViewHolder) holder).getBinding();
 
@@ -343,6 +343,15 @@ public class UserFragment extends Fragment {
             if (road.getPins().size() > 2)
                 Glide.with(holder.itemView).load(road.getPin(2).imageUrl).into(binding.roadImage3);
 
+            binding.roadView.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(context, ContentActivity.class);
+                    intent.putExtra("Road", road);
+                    startActivity(intent);
+                }
+
+            });
         }
 
         @Override

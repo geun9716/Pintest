@@ -249,6 +249,6 @@ public class DetailViewFragment extends Fragment {
             alarmDTO.timestamp = System.currentTimeMillis();
 
             FirebaseFirestore.getInstance().collection("alarms").document().set(alarmDTO);
-            }
+        }
     }
 }
