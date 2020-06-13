@@ -10,6 +10,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -28,16 +30,22 @@ import com.example.pintest1.navigation.GridFragment;
 import com.example.pintest1.navigation.AlarmFragment;
 import com.example.pintest1.navigation.RoadFragment;
 import com.example.pintest1.navigation.UserFragment;
+import com.example.pintest1.navigation.arsFragment;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.ar.sceneform.Scene;
+import com.google.ar.sceneform.ux.ArFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.example.pintest1.util.StatusCode.FRAGMENT_ARG;
@@ -49,11 +57,51 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     private ActivityMainBinding binding;
 
     private Uri photoPath;
+    Fragment arsViewFragment = new arsFragment();
+
+    private Scene scene;
+    private final PermissionListener permissionListener = new PermissionListener() {
+        @Override
+        public void onPermissionGranted() {
+            Toast.makeText(MainActivity.this, "권한 허가", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onPermissionDenied(List<String> deniedPermissions) {
+            Toast.makeText(MainActivity.this, "권한 거부", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setRationaleConfirmText("권한 필요")
+                .setDeniedMessage("권한 거절")
+                .setPermissions(Manifest.permission.CAMERA)
+                .check();
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setRationaleConfirmText("권한 필요")
+                .setDeniedMessage("권한 거절")
+                .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+                .check();
 
+        TedPermission.with(this)
+                .setPermissionListener(permissionListener)
+                .setRationaleConfirmText("권한 필요")
+                .setDeniedMessage("권한 거절")
+                .setPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+                .check();
+//        arFragment=new ArFragment();
+        //arFragment=getSupportFragmentManager().
+
+
+
+
+        //arFragment.getArSceneView().getScene();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         binding.progressBar.setVisibility(View.VISIBLE);
@@ -62,7 +110,10 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         binding.bottomNavigation.setOnNavigationItemSelectedListener(this);
         binding.bottomNavigation.setSelectedItemId(R.id.action_home);
 
+
+
     }
+
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -71,13 +122,17 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             case R.id.action_home:
                 setToolbarDefault();
 
-                Fragment detailViewFragment = new DetailViewFragment();
+                /*Fragment detailViewFragment = new DetailViewFragment();
                 Bundle bundle_0 = new Bundle();
                 bundle_0.putInt(FRAGMENT_ARG, 0);
 
-                detailViewFragment.setArguments(bundle_0);
+                detailViewFragment.setArguments(bundle_0);*/
 
-                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, detailViewFragment).commit();
+                Bundle bundle_0 = new Bundle();
+                bundle_0.putInt(FRAGMENT_ARG, 0);
+
+                arsViewFragment.setArguments(bundle_0);
+                getSupportFragmentManager().beginTransaction().replace(R.id.main_content, arsViewFragment).commit();
 
                 return true;
 
