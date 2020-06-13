@@ -67,6 +67,7 @@ public class UserFragment extends Fragment {
 
     private ArrayList<RoadDTO> roadDTOs;
     private ArrayList<ContentDTO> contentDTOs;
+    private ArrayList<String> pIDs;
     private ActivityMainBinding binding;
     private Context context;
 
@@ -148,15 +149,17 @@ public class UserFragment extends Fragment {
                 }
             }
         });
+
         userbinding.addRoad.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(context, MakeRoadActivity.class);
-                if (uid == currentUserUid)
+                if (uid == currentUserUid){
+                    Intent intent = new Intent(context, MakeRoadActivity.class);
                     intent.putExtra("destinationUid", currentUserUid);
                 /*RoadDTO road = new RoadDTO(contentDTOs);
                 intent.putExtra("Road", road);*/
-                startActivity(intent);
+                    startActivity(intent);
+                }
             }
         });
         return view;
@@ -239,6 +242,7 @@ public class UserFragment extends Fragment {
 
         UserFragmentRecyclerViewAdapter(){
             contentDTOs = new ArrayList<ContentDTO>();
+            pIDs = new ArrayList<String>();
             firestore.collection("images").whereEqualTo("uid",uid).addSnapshotListener(
                             new EventListener<QuerySnapshot>() {
                 @Override
@@ -247,6 +251,7 @@ public class UserFragment extends Fragment {
                     if (queryDocumentSnapshots == null) return ;
                     for(DocumentSnapshot document:queryDocumentSnapshots.getDocuments()){
                         contentDTOs.add(document.toObject(ContentDTO.class));
+                        pIDs.add(document.getId());
                     }
                     userbinding.accountTvPostCount.setText(String.valueOf(contentDTOs.size()));
                     notifyDataSetChanged();
@@ -277,6 +282,7 @@ public class UserFragment extends Fragment {
                     Intent intent = new Intent(context, ContentActivity.class);
                     ContentDTO contentDTO = contentDTOs.get(position);
                     intent.putExtra("Content", contentDTO);
+                    intent.putExtra("pID", pIDs.get(position));
                     startActivity(intent);
                 }
             });
