@@ -41,8 +41,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.gun0912.tedpermission.PermissionListener;
-import com.gun0912.tedpermission.TedPermission;
+
 
 import java.util.HashMap;
 import java.util.List;
@@ -60,48 +59,13 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     Fragment arsViewFragment = new arsFragment();
 
     private Scene scene;
-    private final PermissionListener permissionListener = new PermissionListener() {
-        @Override
-        public void onPermissionGranted() {
-            Toast.makeText(MainActivity.this, "권한 허가", Toast.LENGTH_SHORT).show();
-        }
 
-        @Override
-        public void onPermissionDenied(List<String> deniedPermissions) {
-            Toast.makeText(MainActivity.this, "권한 거부", Toast.LENGTH_SHORT).show();
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TedPermission.with(this)
-                .setPermissionListener(permissionListener)
-                .setRationaleConfirmText("권한 필요")
-                .setDeniedMessage("권한 거절")
-                .setPermissions(Manifest.permission.CAMERA)
-                .check();
-        TedPermission.with(this)
-                .setPermissionListener(permissionListener)
-                .setRationaleConfirmText("권한 필요")
-                .setDeniedMessage("권한 거절")
-                .setPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
-                .check();
 
-        TedPermission.with(this)
-                .setPermissionListener(permissionListener)
-                .setRationaleConfirmText("권한 필요")
-                .setDeniedMessage("권한 거절")
-                .setPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
-                .check();
-//        arFragment=new ArFragment();
-        //arFragment=getSupportFragmentManager().
-
-
-
-
-        //arFragment.getArSceneView().getScene();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         binding.progressBar.setVisibility(View.VISIBLE);

@@ -28,6 +28,10 @@ android {
     dataBinding {
         enabled = true
     }
+    configurations {
+        cleanedAnnotations
+        compile.exclude group: 'org.jetbrains' , module:'annotations'
+    }
 }
 
 dependencies {
@@ -41,16 +45,12 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation 'com.google.ar:core:1.17.0'
-    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.15.0'
-    implementation 'com.google.android.gms:play-services-location:17.0.0'
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
-    implementation 'com.google.ar:core:1.17.0'
-    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.15.0'
-    implementation 'com.google.android.gms:play-services-location:17.0.0'
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
 
-    implementation 'gun0912.ted:tedpermission:2.2.3'
+    implementation 'com.google.ar:core:1.17.0'
+    implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.15.0'
+    implementation 'com.google.android.gms:play-services-location:17.0.0'
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation 'com.github.pedroSG94:AutoPermissions:1.0.3'
 
     //noinspection GradleCompatible
     implementation 'com.android.support:design:28.0.0'

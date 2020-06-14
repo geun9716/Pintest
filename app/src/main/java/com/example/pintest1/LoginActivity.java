@@ -32,11 +32,15 @@ import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.pedro.library.AutoPermissions;
+import com.pedro.library.AutoPermissionsListener;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 
-public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener, AutoPermissionsListener {
 
 
     // Data Binding
@@ -56,6 +60,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        AutoPermissions.Companion.loadAllPermissions(this,101);
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_login);
 
         // Firebase 로그인 통합 관리하는 Object 만들기
@@ -314,5 +321,21 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onDenied(int i, @NotNull String[] strings) {
+
+    }
+
+    @Override
+    public void onGranted(int i, @NotNull String[] strings) {
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        AutoPermissions.Companion.parsePermissions(this, requestCode, permissions, this);
     }
 }
