@@ -1,7 +1,9 @@
 package com.example.pintest1.navigation;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -20,11 +22,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.pintest1.ContentActivity;
 import com.example.pintest1.MainActivity;
 import com.example.pintest1.R;
+import com.example.pintest1.model.ContentDTO;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,6 +39,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Plane;
 import com.google.ar.core.Pose;
@@ -44,9 +50,16 @@ import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.QuaternionEvaluator;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,7 +73,7 @@ import static java.lang.Math.PI;
  */
 public class arsFragment extends Fragment implements SensorEventListener,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener{
+        GoogleApiClient.OnConnectionFailedListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -72,8 +85,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
     private String mParam2;
 
     ArFragment arFragment;
-    Scene scene;
-    ArSceneView arSceneView;
+
     private FusedLocationProviderClient providerClient;
     private GoogleApiClient googleApiClient;
 
@@ -111,10 +123,14 @@ public class arsFragment extends Fragment implements SensorEventListener,
     private ArrayList<AnchorNode> anchorNodes = new ArrayList<AnchorNode>();
     private ArrayList<Node> nodes = new ArrayList<Node>();
 
-    public arsFragment() {
-        // Required empty public constructor
-    }
+    private FirebaseFirestore firestore;
 
+    private double difflat;
+    private double difflong;
+
+    private boolean alreadyin = false;
+    private Anchor anchor;
+    private ObjectAnimator orbitAnimation;
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -148,21 +164,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-
-
-
-        return inflater.inflate(R.layout.fragment_ars, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        arFragment = (ArFragment) getChildFragmentManager().findFragmentById(R.id.ux_fragment);
-        // arFragment= new ArFragment();
-        arSceneView=arFragment.getArSceneView();
-        scene=arFragment.getArSceneView().getScene();
-
-
+        firestore = FirebaseFirestore.getInstance();
 
         googleApiClient = new GoogleApiClient.Builder(getActivity())
                 .addApi(LocationServices.API)
@@ -171,36 +173,24 @@ public class arsFragment extends Fragment implements SensorEventListener,
                 .build();
 
         providerClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        googleApiClient.connect();
 
-        Pininfo pininfo = new Pininfo(latDestination, lngDestination);
-        Pininfo pininfo2 = new Pininfo(37.513916, 126.910383);
-        pininfos.add(pininfo);
-        pininfos.add(pininfo2);
 
-        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
         providerClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (location != null) {
-                            for (int i = 0; i < pininfos.size(); i++) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                                degree(i);
-                                distance2(i);
-                            }
+                .addOnSuccessListener(getActivity(), location -> {
+                    if (location != null) {
+                        for (int i = 0; i < pininfos.size(); i++) {
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
+                            String s1 = latitude + "," + longitude;
+
+                            Log.d("firstlocation", s1);
+                            degree(i);
+                            distance2(i);
                         }
                     }
                 });
+
         LocationCallback listener = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -210,17 +200,54 @@ public class arsFragment extends Fragment implements SensorEventListener,
                         for (int i = 0; i < pininfos.size(); i++) {
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
-                            degree(i);
-                            distance2(i);
-                            String txt;
-                            txt = "좌표 :" + "latitude :" + latitude + "longtitude : " + longitude;
-                            txtResult.setText(txt);
+
+                            degree(i); //degree 변경
+                            distance2(i); //distance 변경
+
+
                         }
                     }
                 }
             }
         };
-        googleApiClient.connect();
+        difflat=LatitudeInDifference(10);
+        difflong=LongitudeInDifference(latitude,10);
+
+
+        return inflater.inflate(R.layout.fragment_ars, container, false);
+    }
+
+    //아래는 범위를 만들기 위한 계산 함수 자신의 latitude-LatitudeInDifference ~ latitude+LatitudeInDifference 가 범위가 된다
+    //diff는 거리 여기서는 30m 가 들어갈 예정
+    //반경 m이내의 위도차(degree)
+    public double LatitudeInDifference(int diff) {
+        //지구반지름
+        final int earth = 6371000;    //단위m
+
+        return (diff * 360.0) / (2 * Math.PI * earth);
+    }
+
+    //반경 m이내의 경도차(degree)
+    public double LongitudeInDifference(double _latitude, int diff) {
+        //지구반지름
+        final int earth = 6371000;    //단위m
+
+        double ddd = Math.cos(0);
+        double ddf = Math.cos(Math.toRadians(_latitude));
+
+        return (diff * 360.0) / (2 * Math.PI * earth * Math.cos(Math.toRadians(_latitude)));
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        arFragment = (ArFragment) getChildFragmentManager().findFragmentById(R.id.ux_fragment);
+        // arFragment= new ArFragment();
+
+        /*Pininfo pininfo = new Pininfo(latDestination, lngDestination);
+        Pininfo pininfo2 = new Pininfo(37.513916, 126.910383);
+        pininfos.add(pininfo);
+        pininfos.add(pininfo2);*/
 
         mSensorManager = (SensorManager) getActivity().getSystemService(getActivity().SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -242,28 +269,13 @@ public class arsFragment extends Fragment implements SensorEventListener,
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(this::onUpdate);
 
-        for (int i = 0; i < pininfos.size(); i++) {
+       /* for (int i = 0; i < pininfos.size(); i++) {
             distance2(i);
             degree(i);
-            /*float x = (float) (pininfos.get(i).distance * Math.cos(degrees));
-            float y = 0;
-            float z = (float) (pininfos.get(i).distance * Math.sin(degrees));
-
-           Vector3 cameraPos = arFragment.getArSceneView().getScene().getCamera().getWorldPosition();
-            Vector3 cameraForward = arFragment.getArSceneView().getScene().getCamera().getForward();
-            Vector3 position = Vector3.add(cameraPos, cameraForward.scaled((float) pininfos.get(i).distance));
-
-
-            Pose pose = Pose.makeTranslation(position.x, 0, position.z);
-            //Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(pose);
-            //AnchorNode anchorNode = new AnchorNode(anchor);
-            //anchorNode.setParent(arFragment.getArSceneView().getScene());*/
-
-
 
             Node node = new Node();
-            Context c =getActivity();
-            String str = "dist : " +  pininfos.get(i).distance;
+            Context c = getActivity();
+            String str = "dist : " + pininfos.get(i).distance;
             node.setOnTouchListener((v, event) -> {
                 Toast.makeText(
                         c, str, Toast.LENGTH_LONG).show();
@@ -276,8 +288,9 @@ public class arsFragment extends Fragment implements SensorEventListener,
             nodes.add(node);
 
 
-        }
+        }*/
     }
+
     private void distance2(int i) {
         Location A = new Location("point A");
 
@@ -286,10 +299,12 @@ public class arsFragment extends Fragment implements SensorEventListener,
         Location B = new Location("point B");
         B.setLatitude(pininfos.get(i).pinlatitude);
         B.setLongitude(pininfos.get(i).pinlontitude);
-
+        String ss=pininfos.get(i).pinlatitude+","+pininfos.get(i).pinlontitude;
+        Log.d("disttt",ss);
         double distanced = A.distanceTo(B);
         pininfos.get(i).distance = distanced;
     }
+
     private void degree(int i) {
 
 
@@ -335,47 +350,55 @@ public class arsFragment extends Fragment implements SensorEventListener,
         }
 
     }
+
     private void getpins(Plane plane, Frame frame) {
 
 
+        Log.d("sizing",Integer.toString(pininfos.size()));
         for (int i = 0; i < pininfos.size(); i++) {
             //distance2(i);
             distance2(i);
             degree(i);
 
-           /* if (pininfos.size()>0 && pininfos.get(i).distance > 13) { //특정거리 이상시 해당 핀 제거 차후 보정 예정
-                anchorNodes.get(i).removeChild(nodes.get(i));
-                anchorNodes.remove(i);
-                nodes.remove(i);
-                pininfos.remove(i);
-            }*/
-/*            if(pininfos.get(i).pinplaced == true && Math.abs(pininfos.get(i).degree - azimuthinDegress) >=180 ){
-                anchorNodes.get(i).removeChild(nodes.get(i));
-                pininfos.get(i).pinplaced=false;
-            }*/
-            if (pininfos.get(i).pinplaced != true) {
-                if ((pininfos.get(i).degree >= azimuthinDegress - 3) && (pininfos.get(i).degree <= azimuthinDegress + 3)) {  //pin이 주변에 있을때
+            String check=azimuthinDegress+","+pininfos.get(i).degree;
 
-                    //Toast.makeText(getActivity(), "walk", Toast.LENGTH_SHORT).show();
-                    Vector3 cameraPos = arFragment.getArSceneView().getScene().getCamera().getWorldPosition();
-                    Vector3 cameraForward = arFragment.getArSceneView().getScene().getCamera().getForward();
-                    Vector3 position = Vector3.add(cameraPos, cameraForward.scaled((float) pininfos.get(i).distance));
+            Log.d("heading",Integer.toString((int) azimuthinDegress));
+            Log.d("anchor", String.valueOf(pininfos.get(i).pinplaced));
+            Log.d("degree",Integer.toString((int) pininfos.get(i).degree));
+            Log.d("checkequal",check);
+            Log.d("distance", String.valueOf(pininfos.get(i).distance));
+
+
+            if(pininfos.size()>0){
+
+                if (pininfos.get(i).pinplaced != true) {
+                    if ((pininfos.get(i).degree >= azimuthinDegress - 10) && (pininfos.get(i).degree <= azimuthinDegress + 10)) {  //pin이 주변에 있을때
+
+                        Toast.makeText(getActivity(), "walk", Toast.LENGTH_SHORT).show();
+                        Vector3 cameraPos = arFragment.getArSceneView().getScene().getCamera().getWorldPosition();
+                        Vector3 cameraForward = arFragment.getArSceneView().getScene().getCamera().getForward();
+                        Vector3 position = Vector3.add(cameraPos, cameraForward.scaled((float) pininfos.get(i).distance));
 
                   /*  float x = (float) (pininfos.get(i).distance * Math.cos(DegreeToRadian(pininfos.get(i).degree)));
                     float y = 0;
                     float z = (float) (pininfos.get(i).distance * Math.sin(DegreeToRadian(pininfos.get(i).degree)));*/
 
-                    Pose pose = Pose.makeTranslation(position.x, 0,position.z);
+                        Pose pose = Pose.makeTranslation(position.x, 0, position.z);
+                        anchor=null;
+                        anchor= arFragment.getArSceneView().getSession().createAnchor(pose);
 
-                    Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(pose);
-                    AnchorNode anchorNode = new AnchorNode(anchor);
-                    anchorNode.setParent(arFragment.getArSceneView().getScene());
+                        AnchorNode anchorNode = new AnchorNode(anchor);
+                        anchorNode.setParent(arFragment.getArSceneView().getScene());
+                        nodes.get(i).setParent(anchorNode);
+                       // nodes.get(i).setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 0));
+                        orbitAnimation = createAnimator();
+                        orbitAnimation.setTarget( nodes.get(i));
+                        orbitAnimation.setDuration(1000);
+                        orbitAnimation.start();
+                        nodes.get(i).setRenderable(this.modelRenderable);
+                        anchorNodes.add(anchorNode);
 
-                    nodes.get(i).setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 90));
-                    nodes.get(i).setRenderable(this.modelRenderable);
-                    nodes.get(i).setParent(anchorNode);
-                    anchorNodes.add(anchorNode);
-                    pininfos.get(i).pinplaced = true;
+                        pininfos.get(i).pinplaced = true;
              /*       Toast.makeText(this, "walk", Toast.LENGTH_SHORT).show();
                     // List<HitResult> hitTest = frame.hitTest(getScreenCenter().x, getScreenCenter().y);
                     Log.d(TAG, "here2");
@@ -442,11 +465,44 @@ public class arsFragment extends Fragment implements SensorEventListener,
                     nodes.add(node);
                     pininfos.get(i).pinplaced=true;
 */
-                    //   }
+                        //   }
 
+                    }
                 }
             }
+
+/*            if(pininfos.get(i).pinplaced == true && Math.abs(pininfos.get(i).degree - azimuthinDegress) >=180 ){
+                anchorNodes.get(i).removeChild(nodes.get(i));
+                pininfos.get(i).pinplaced=false;
+            }*/
+
+
         }
+    }
+    private static ObjectAnimator createAnimator() {
+        // Node's setLocalRotation method accepts Quaternions as parameters.
+        // First, set up orientations that will animate a circle.
+        Quaternion orientation1 = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), 0);
+        Quaternion orientation2 = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), 120);
+        Quaternion orientation3 = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), 240);
+        Quaternion orientation4 = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), 360);
+
+        ObjectAnimator orbitAnimation = new ObjectAnimator();
+        orbitAnimation.setObjectValues(orientation1, orientation2, orientation3, orientation4);
+
+        // Next, give it the localRotation property.
+        orbitAnimation.setPropertyName("localRotation");
+
+        // Use Sceneform's QuaternionEvaluator.
+        orbitAnimation.setEvaluator(new QuaternionEvaluator());
+
+        //  Allow orbitAnimation to repeat forever
+        orbitAnimation.setRepeatCount(ObjectAnimator.INFINITE);
+        orbitAnimation.setRepeatMode(ObjectAnimator.RESTART);
+        orbitAnimation.setInterpolator(new LinearInterpolator());
+        orbitAnimation.setAutoCancel(true);
+
+        return orbitAnimation;
     }
 
     @Override
@@ -471,21 +527,86 @@ public class arsFragment extends Fragment implements SensorEventListener,
         mSensorManager.registerListener((SensorEventListener) this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
         mSensorManager.registerListener((SensorEventListener) this, mMagnetometer, SensorManager.SENSOR_DELAY_GAME);
     }
+
     private LocationCallback listener = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             super.onLocationResult(locationResult);
             if (locationResult != null) {
                 for (Location location : locationResult.getLocations()) {
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+
+
+
+                    String s2 = latitude + "," + longitude;
+                    Log.d("nowgps", s2);
+
+                    firestore.collection("images")
+                            .whereGreaterThanOrEqualTo("Latitude",latitude-difflat)
+                            .whereLessThanOrEqualTo("Latitude",latitude+difflat).addSnapshotListener(
+                            new EventListener<QuerySnapshot>() {
+                                @Override
+                                public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
+
+                                    if (queryDocumentSnapshots == null) return;
+                                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
+                                        if(document.toObject(ContentDTO.class).Longitude >= (longitude-difflong)){
+                                            if(document.toObject(ContentDTO.class).Longitude <= (longitude+difflong)) {
+                                                if (document.toObject(ContentDTO.class).Latitude != 0 && document.toObject(ContentDTO.class).Longitude != 0) {
+                                                    alreadyin = false;
+                                                    Pininfo pininfo = new Pininfo(document.toObject(ContentDTO.class).Latitude, document.toObject(ContentDTO.class).Longitude);
+                                                    for (int i = 0; i < pininfos.size(); i++) {
+                                                        if (pininfos.get(i).pinlatitude == pininfo.pinlatitude && pininfos.get(i).pinlontitude == pininfo.pinlontitude) {
+                                                            alreadyin = true;
+                                                        }
+                                                    }
+                                                    if (alreadyin == false) {
+                                                        pininfos.add(pininfo);
+                                                        Node node = new Node();
+                                                        Context c = getActivity();
+                                                        node.setOnTouchListener((v, event) -> {
+                                                           
+                                                            Intent intent = new Intent(getContext(), ContentActivity.class);
+                                                            intent.putExtra("Content", document.toObject(ContentDTO.class));
+                                                            intent.putExtra("pID", document.getId());
+                                                            startActivity(intent);
+                                                            return false;
+
+                                                        });
+                                                        nodes.add(node);
+                                                    }
+
+
+                                                    String s1 = latitude - difflat + "," + latitude + difflat;
+                                                    String s = document.toObject(ContentDTO.class).Latitude + "," + document.toObject(ContentDTO.class).Latitude;
+                                                    Log.d("checking", "thisis");
+                                                    Log.d("bumweey", s1);
+                                                    Log.d("thisgps", s);
+
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                }
+                            });
                     for (int i = 0; i < pininfos.size(); i++) {
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
 
                         degree(i); //degree 변경
                         distance2(i); //distance 변경
-
-
+                        if(pininfos.size()>0){
+                            if (pininfos.get(i).distance > 13) { //특정거리 이상시 해당 핀 제거 차후 보정 예정
+                                anchorNodes.get(i).removeChild(nodes.get(i));
+                                pininfos.get(i).pinplaced=false;
+                                anchorNodes.remove(i);
+                                nodes.remove(i);
+                                pininfos.remove(i);
+                            }
+                        }
                     }
+
+
                 }
             }
         }
@@ -514,7 +635,6 @@ public class arsFragment extends Fragment implements SensorEventListener,
             azimuthinDegress = (int) (Math.toDegrees(SensorManager.getOrientation(mR, mOrientation)[0]) + 360) % 360;
 
             mCurrentDegree = -azimuthinDegress;
-
 
 
             //degrees=degree();
@@ -546,7 +666,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
         }
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         providerClient.requestLocationUpdates(locationRequest, listener, null);
-        requestingLocationUpdates=true;
+        requestingLocationUpdates = true;
     }
 
     @Override
