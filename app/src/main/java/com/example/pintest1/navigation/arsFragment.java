@@ -131,6 +131,8 @@ public class arsFragment extends Fragment implements SensorEventListener,
     private boolean alreadyin = false;
     private Anchor anchor;
     private ObjectAnimator orbitAnimation;
+
+    private Config config;
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -242,6 +244,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         arFragment = (ArFragment) getChildFragmentManager().findFragmentById(R.id.ux_fragment);
+
         // arFragment= new ArFragment();
 
         /*Pininfo pininfo = new Pininfo(latDestination, lngDestination);
@@ -268,6 +271,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
                 });
 
         arFragment.getArSceneView().getScene().addOnUpdateListener(this::onUpdate);
+
 
        /* for (int i = 0; i < pininfos.size(); i++) {
             distance2(i);
@@ -343,6 +347,9 @@ public class arsFragment extends Fragment implements SensorEventListener,
                     //=degree();
                     Iterator iterableAnchor = frame.getUpdatedAnchors().iterator();
                     if (!iterableAnchor.hasNext()) {
+                        /*config=arFragment.getArSceneView().getSession().getConfig();
+                        config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);
+                        arFragment.getArSceneView().getSession().configure(config);*/
                         getpins(plane, frame);
                     }
                 }
@@ -352,6 +359,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
     }
 
     private void getpins(Plane plane, Frame frame) {
+
 
 
         Log.d("sizing",Integer.toString(pininfos.size()));
@@ -566,7 +574,10 @@ public class arsFragment extends Fragment implements SensorEventListener,
                                                         Node node = new Node();
                                                         Context c = getActivity();
                                                         node.setOnTouchListener((v, event) -> {
-                                                           
+                                                            /*config=arFragment.getArSceneView().getSession().getConfig();
+                                                            config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
+
+                                                            arFragment.getArSceneView().getSession().configure(config);*/
                                                             Intent intent = new Intent(getContext(), ContentActivity.class);
                                                             intent.putExtra("Content", document.toObject(ContentDTO.class));
                                                             intent.putExtra("pID", document.getId());
