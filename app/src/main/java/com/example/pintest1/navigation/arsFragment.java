@@ -17,12 +17,20 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,12 +46,19 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Plane;
 import com.google.ar.core.Pose;
+import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
+import com.google.ar.core.exceptions.CameraNotAvailableException;
+import com.google.ar.core.exceptions.UnavailableApkTooOldException;
+import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.FrameTime;
@@ -60,9 +75,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.OnPausedListener;
+import com.kyleduo.switchbutton.SwitchButton;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Random;
 
 import static java.lang.Math.PI;
 
@@ -133,6 +151,13 @@ public class arsFragment extends Fragment implements SensorEventListener,
     private ObjectAnimator orbitAnimation;
 
     private Config config;
+
+    private ImageView reset;
+    private ImageView resetlocation;
+    private SwitchButton switchButton;
+
+    private Animation tranlateRightAnim;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -162,10 +187,31 @@ public class arsFragment extends Fragment implements SensorEventListener,
         //arFragments.getArSceneView().getScene();
     }
 
+    private class SlidingPageAnimationListener implements Animation.AnimationListener {
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        public void onAnimationEnd(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
+        tranlateRightAnim = AnimationUtils.loadAnimation(getActivity(), R.anim.translate_right);
+        SlidingPageAnimationListener animListener = new SlidingPageAnimationListener();
+        tranlateRightAnim.setAnimationListener(animListener);
+
+
         firestore = FirebaseFirestore.getInstance();
 
         googleApiClient = new GoogleApiClient.Builder(getActivity())
@@ -212,11 +258,95 @@ public class arsFragment extends Fragment implements SensorEventListener,
                 }
             }
         };
-        difflat=LatitudeInDifference(10);
-        difflong=LongitudeInDifference(latitude,10);
+        difflat = LatitudeInDifference(10);
+        difflong = LongitudeInDifference(latitude, 10);
+
+        View view = inflater.inflate(R.layout.fragment_ars,
+                container, false);
+        reset = (ImageView) view.findViewById(R.id.image_button1);
+        resetlocation = (ImageView) view.findViewById(R.id.image_button2);
+        reset.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
 
 
-        return inflater.inflate(R.layout.fragment_ars, container, false);
+                for (int i = 0; i < anchorNodes.size(); i++) {
+                    anchorNodes.get(i).getAnchor().detach();
+                }
+                anchorNodes.clear();
+                nodes.clear();
+                pininfos.clear();
+
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ft.detach(arsFragment.this).attach(arsFragment.this).commit();
+
+
+
+                providerClient.getLastLocation()
+                        .addOnSuccessListener(getActivity(), location -> {
+                            if (location != null) {
+                                for (int i = 0; i < pininfos.size(); i++) {
+                                    latitude = location.getLatitude();
+                                    longitude = location.getLongitude();
+                                    String s1 = latitude + "," + longitude;
+
+                                    Log.d("firstlocation", s1);
+                                    degree(i);
+                                    distance2(i);
+                                }
+                            }
+                        });
+
+                return false;
+            }
+
+        });
+
+        resetlocation.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                providerClient.getLastLocation()
+                        .addOnSuccessListener(getActivity(), location -> {
+                            if (location != null) {
+                                for (int i = 0; i < pininfos.size(); i++) {
+                                    latitude = location.getLatitude();
+                                    longitude = location.getLongitude();
+                                    String s1 = latitude + "," + longitude;
+
+                                    Log.d("firstlocation", s1);
+                                    degree(i);
+                                    distance2(i);
+                                }
+                            }
+                        });
+                String s="현재 좌표는 ["+latitude+","+longitude+"]입니다.";
+                Snackbar.make(view,s,Snackbar.LENGTH_SHORT).show();
+
+                return false;
+            }
+
+        });
+        reset.setVisibility(View.GONE);
+        resetlocation.setVisibility(View.GONE);
+
+        SwitchButton switchButton = (SwitchButton) view.findViewById(R.id.sb_use_listener);
+        switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                if (isChecked) {
+                    reset.setVisibility(View.VISIBLE);
+                    reset.startAnimation(tranlateRightAnim);
+                    resetlocation.setVisibility(View.VISIBLE);
+                    resetlocation.startAnimation(tranlateRightAnim);
+                } else {
+                    reset.setVisibility(View.GONE);
+                    resetlocation.setVisibility(View.GONE);
+                }
+            }
+        });
+        switchButton.setChecked(true);
+        return view;
     }
 
     //아래는 범위를 만들기 위한 계산 함수 자신의 latitude-LatitudeInDifference ~ latitude+LatitudeInDifference 가 범위가 된다
@@ -266,7 +396,9 @@ public class arsFragment extends Fragment implements SensorEventListener,
                                 this.modelRenderable = modelRenderable)
                 .exceptionally(throwable ->
                 {
-                    Toast.makeText(getActivity(), "unable to load", Toast.LENGTH_SHORT).show();
+
+                    //Toast.makeText(getActivity(), "unable to load", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(getActivity().findViewById(android.R.id.content),"unable to load",Snackbar.LENGTH_SHORT).show();
                     return null;
                 });
 
@@ -303,8 +435,8 @@ public class arsFragment extends Fragment implements SensorEventListener,
         Location B = new Location("point B");
         B.setLatitude(pininfos.get(i).pinlatitude);
         B.setLongitude(pininfos.get(i).pinlontitude);
-        String ss=pininfos.get(i).pinlatitude+","+pininfos.get(i).pinlontitude;
-        Log.d("disttt",ss);
+        String ss = pininfos.get(i).pinlatitude + "," + pininfos.get(i).pinlontitude;
+        Log.d("disttt", ss);
         double distanced = A.distanceTo(B);
         pininfos.get(i).distance = distanced;
     }
@@ -341,15 +473,15 @@ public class arsFragment extends Fragment implements SensorEventListener,
             for (Object o : frame.getUpdatedTrackables(Plane.class)) {
                 //Object o = frame.getUpdatedTrackables(Plane.class);
                 Plane plane = (Plane) o;
-
+/*                config = arFragment.getArSceneView().getSession().getConfig();
+                config.setFocusMode(Config.FocusMode.AUTO);
+                arFragment.getArSceneView().getSession().configure(config);*/
                 if (plane.getTrackingState() == TrackingState.TRACKING) {
                     arFragment.getPlaneDiscoveryController().hide();
                     //=degree();
                     Iterator iterableAnchor = frame.getUpdatedAnchors().iterator();
                     if (!iterableAnchor.hasNext()) {
-                        /*config=arFragment.getArSceneView().getSession().getConfig();
-                        config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);
-                        arFragment.getArSceneView().getSession().configure(config);*/
+
                         getpins(plane, frame);
                     }
                 }
@@ -358,31 +490,35 @@ public class arsFragment extends Fragment implements SensorEventListener,
 
     }
 
+    public static float random(float min, float max, int count) {
+        float value = new Random().nextFloat() * (max - min) + min;
+        return Float.valueOf(String.format("%." + count + "f", value));
+    }
+
     private void getpins(Plane plane, Frame frame) {
 
 
-
-        Log.d("sizing",Integer.toString(pininfos.size()));
+        Log.d("sizing", Integer.toString(pininfos.size()));
+        Log.d("sessons", String.valueOf(arFragment.getArSceneView().getSession()));
         for (int i = 0; i < pininfos.size(); i++) {
             //distance2(i);
             distance2(i);
             degree(i);
 
-            String check=azimuthinDegress+","+pininfos.get(i).degree;
-
-            Log.d("heading",Integer.toString((int) azimuthinDegress));
-            Log.d("anchor", String.valueOf(pininfos.get(i).pinplaced));
-            Log.d("degree",Integer.toString((int) pininfos.get(i).degree));
-            Log.d("checkequal",check);
+            String check = azimuthinDegress + "," + pininfos.get(i).degree;
+            String sss = i + ":" + pininfos.get(i).pinplaced;
+            Log.d("heading", Integer.toString((int) azimuthinDegress));
+            Log.d("anchor", sss);
+            Log.d("degree", Integer.toString((int) pininfos.get(i).degree));
+            Log.d("checkequal", check);
             Log.d("distance", String.valueOf(pininfos.get(i).distance));
 
 
-            if(pininfos.size()>0){
+            if (pininfos.size() > 0) {
 
                 if (pininfos.get(i).pinplaced != true) {
                     if ((pininfos.get(i).degree >= azimuthinDegress - 10) && (pininfos.get(i).degree <= azimuthinDegress + 10)) {  //pin이 주변에 있을때
-
-                        Toast.makeText(getActivity(), "walk", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(getActivity().findViewById(android.R.id.content),"Pinsert",Snackbar.LENGTH_SHORT).show();
                         Vector3 cameraPos = arFragment.getArSceneView().getScene().getCamera().getWorldPosition();
                         Vector3 cameraForward = arFragment.getArSceneView().getScene().getCamera().getForward();
                         Vector3 position = Vector3.add(cameraPos, cameraForward.scaled((float) pininfos.get(i).distance));
@@ -391,19 +527,21 @@ public class arsFragment extends Fragment implements SensorEventListener,
                     float y = 0;
                     float z = (float) (pininfos.get(i).distance * Math.sin(DegreeToRadian(pininfos.get(i).degree)));*/
 
-                        Pose pose = Pose.makeTranslation(position.x, 0, position.z);
-                        anchor=null;
-                        anchor= arFragment.getArSceneView().getSession().createAnchor(pose);
+                        Pose pose = Pose.makeTranslation(position.x + random(0.1f, 0.3f, 2), 0, position.z + random(0.1f, 0.3f, 2));
+
+                        anchor = null;
+                        anchor = arFragment.getArSceneView().getSession().createAnchor(pose);
 
                         AnchorNode anchorNode = new AnchorNode(anchor);
                         anchorNode.setParent(arFragment.getArSceneView().getScene());
                         nodes.get(i).setParent(anchorNode);
-                       // nodes.get(i).setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 0));
+                        nodes.get(i).setRenderable(arsFragment.this.modelRenderable);
+                        // nodes.get(i).setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 0));
                         orbitAnimation = createAnimator();
-                        orbitAnimation.setTarget( nodes.get(i));
+                        orbitAnimation.setTarget(nodes.get(i));
                         orbitAnimation.setDuration(1000);
                         orbitAnimation.start();
-                        nodes.get(i).setRenderable(this.modelRenderable);
+
                         anchorNodes.add(anchorNode);
 
                         pininfos.get(i).pinplaced = true;
@@ -487,6 +625,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
 
         }
     }
+
     private static ObjectAnimator createAnimator() {
         // Node's setLocalRotation method accepts Quaternions as parameters.
         // First, set up orientations that will animate a circle.
@@ -546,37 +685,42 @@ public class arsFragment extends Fragment implements SensorEventListener,
                     longitude = location.getLongitude();
 
 
-
                     String s2 = latitude + "," + longitude;
                     Log.d("nowgps", s2);
 
                     firestore.collection("images")
-                            .whereGreaterThanOrEqualTo("Latitude",latitude-difflat)
-                            .whereLessThanOrEqualTo("Latitude",latitude+difflat).addSnapshotListener(
+                            .whereGreaterThanOrEqualTo("Latitude", latitude - difflat)
+                            .whereLessThanOrEqualTo("Latitude", latitude + difflat).addSnapshotListener(
                             new EventListener<QuerySnapshot>() {
                                 @Override
                                 public void onEvent(@javax.annotation.Nullable QuerySnapshot queryDocumentSnapshots, @javax.annotation.Nullable FirebaseFirestoreException e) {
 
                                     if (queryDocumentSnapshots == null) return;
                                     for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                                        if(document.toObject(ContentDTO.class).Longitude >= (longitude-difflong)){
-                                            if(document.toObject(ContentDTO.class).Longitude <= (longitude+difflong)) {
+                                        if (document.toObject(ContentDTO.class).Longitude >= (longitude - difflong)) {
+                                            if (document.toObject(ContentDTO.class).Longitude <= (longitude + difflong)) {
                                                 if (document.toObject(ContentDTO.class).Latitude != 0 && document.toObject(ContentDTO.class).Longitude != 0) {
+
                                                     alreadyin = false;
-                                                    Pininfo pininfo = new Pininfo(document.toObject(ContentDTO.class).Latitude, document.toObject(ContentDTO.class).Longitude);
                                                     for (int i = 0; i < pininfos.size(); i++) {
-                                                        if (pininfos.get(i).pinlatitude == pininfo.pinlatitude && pininfos.get(i).pinlontitude == pininfo.pinlontitude) {
+                                                        degree(i); //degree 변경
+                                                        distance2(i); //distance 변경
+
+                                                        if (pininfos.get(i).pid.equals(document.getId()) == true) {
                                                             alreadyin = true;
                                                         }
                                                     }
+
                                                     if (alreadyin == false) {
+                                                        Pininfo pininfo = new Pininfo(document.toObject(ContentDTO.class).Latitude, document.toObject(ContentDTO.class).Longitude);
+                                                        pininfo.pid = document.getId();
                                                         pininfos.add(pininfo);
                                                         Node node = new Node();
                                                         Context c = getActivity();
                                                         node.setOnTouchListener((v, event) -> {
-                                                            /*config=arFragment.getArSceneView().getSession().getConfig();
-                                                            config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
 
+                                  /*                          config=arFragment.getArSceneView().getSession().getConfig();
+                                                            config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
                                                             arFragment.getArSceneView().getSession().configure(config);*/
                                                             Intent intent = new Intent(getContext(), ContentActivity.class);
                                                             intent.putExtra("Content", document.toObject(ContentDTO.class));
@@ -590,7 +734,7 @@ public class arsFragment extends Fragment implements SensorEventListener,
 
 
                                                     String s1 = latitude - difflat + "," + latitude + difflat;
-                                                    String s = document.toObject(ContentDTO.class).Latitude + "," + document.toObject(ContentDTO.class).Latitude;
+                                                    String s = document.toObject(ContentDTO.class).Latitude + "," + document.toObject(ContentDTO.class).Longitude;
                                                     Log.d("checking", "thisis");
                                                     Log.d("bumweey", s1);
                                                     Log.d("thisgps", s);
@@ -606,10 +750,10 @@ public class arsFragment extends Fragment implements SensorEventListener,
 
                         degree(i); //degree 변경
                         distance2(i); //distance 변경
-                        if(pininfos.size()>0){
+                        if (pininfos.size() > 0) {
                             if (pininfos.get(i).distance > 13) { //특정거리 이상시 해당 핀 제거 차후 보정 예정
                                 anchorNodes.get(i).removeChild(nodes.get(i));
-                                pininfos.get(i).pinplaced=false;
+                                pininfos.get(i).pinplaced = false;
                                 anchorNodes.remove(i);
                                 nodes.remove(i);
                                 pininfos.remove(i);
@@ -626,9 +770,23 @@ public class arsFragment extends Fragment implements SensorEventListener,
     @Override
     public void onPause() {
         super.onPause();
+        Log.d("pausedd", "pused");
+
         mSensorManager.unregisterListener((SensorEventListener) this, mAccelerometer);
         mSensorManager.unregisterListener((SensorEventListener) this, mMagnetometer);
         providerClient.removeLocationUpdates(listener);
+        if(pininfos.size()>0){
+            for (int i = 0; i < anchorNodes.size(); i++) {
+                anchorNodes.get(i).getAnchor().detach();
+            }
+            anchorNodes.clear();
+            nodes.clear();
+            pininfos.clear();
+
+        }
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.attach(arsFragment.this).commit();
+
     }
 
     @Override

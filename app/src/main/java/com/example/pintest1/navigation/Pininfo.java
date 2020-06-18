@@ -5,7 +5,7 @@ public class Pininfo {
     double pinlontitude;
     double distance;
     double degree;
-
+    String pid;
     boolean pinplaced;
 
     Pininfo(double latitude, double lontitude){
@@ -13,5 +13,6 @@ public class Pininfo {
         pinlontitude=lontitude;
         distance=0;
         pinplaced=false;
+        pid=null;
     }
 }

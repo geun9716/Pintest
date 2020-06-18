@@ -1,14 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".navigation.arsFragment">
+    tools:context=".navigation.arsFragment"
+    android:id="@+id/ars_view">
 
     <fragment
         android:id="@+id/ux_fragment"
         android:name="com.google.ar.sceneform.ux.ArFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <ImageView
+        android:id="@+id/image_button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:padding="0dp"
+        android:src="@drawable/ic_reset"
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/sb_use_listener" />
+
+    <ImageView
+        android:id="@+id/image_button2"
+        android:layout_width="78dp"
+        android:layout_height="77dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="140dp"
+        android:padding="0dp"
+        android:src="@drawable/ic_blakcpin"
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/image_button1" />
+
+    <com.kyleduo.switchbutton.SwitchButton
+        android:id="@+id/sb_use_listener"
+        style="@style/SwitchButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/image_button2" />
+
 
 </FrameLayout>
