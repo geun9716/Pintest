@@ -194,6 +194,16 @@ public class ContentActivity extends AppCompatActivity {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     favoriteEvent(finalPosition);
+                    String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    if(contentDTOs.get(position).favorites.containsKey(uid)) {
+                        binding.detailviewitemFavoritecounterTextview.setText("Likes " + Integer.toString(contentDTOs.get(position).favoriteCount - 1));
+                        binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite);
+                    }
+                    else{
+                        binding.detailviewitemFavoritecounterTextview.setText("Likes " + Integer.toString(contentDTOs.get(position).favoriteCount + 1));
+                        binding.detailviewitemFavoriteImageview.setImageResource(R.drawable.ic_favorite_border);
+                    }
+
                     return false;
                 }
             });
@@ -234,18 +244,24 @@ public class ContentActivity extends AppCompatActivity {
                 @Override
                 public Handler apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    ContentDTO contentDTO = transaction.get(tsDoc).toObject(ContentDTO.class);
+                    ContentDTO contentDTO = contentDTOs.get(position);
 
                     if(contentDTO.favorites.containsKey(uid)){
                         //When the button is clicked
                         contentDTO.favoriteCount = contentDTO.favoriteCount-1;
                         contentDTO.favorites.remove(uid);
+
+                        contentDTOs.remove(position);
+                        contentDTOs.add(position, contentDTO);
                     }
                     else{
                         //When the button is not clicked
                         contentDTO.favoriteCount = contentDTO.favoriteCount+1;
                         contentDTO.favorites.put(uid,true);
                         favoriteAlarm(contentDTOs.get(finalPosition).uid);
+
+                        contentDTOs.remove(position);
+                        contentDTOs.add(position, contentDTO);
                     }
                     transaction.set(tsDoc,contentDTO);
 
